@@ -2,9 +2,10 @@ PhiloGL.unpack();
 
 var width = 512, //canvas width
     height = 512, //canvas height
+    maxDim = Math.max(width, height) + 1,
     vWidth = width, //domain width for the vector field
     vHeight = height, //domain height for the vector field
-    lmax = 2, //maximum displacement distance (in pixels)
+    lmax = 20, //maximum displacement distance (in pixels)
     vmax = 1; //maximum vector field value
 
 function fract(x) {
@@ -30,9 +31,8 @@ function unpackFloatFromVec4i(value){
 
 
 function createWhiteNoiseTextureArray() {
-  //var imageData = document.createElement('canvas').getContext('2d').createImageData(width + 2 * lmax, height + 2 * lmax),
   var imageData = document.createElement('canvas').getContext('2d').createImageData(width, height),
-      ans = imageData.data,//new Uint8Array((width + 2 * lmax) * (height + 2 * lmax)* 4),
+      ans = imageData.data,
       rand = Math.random;
 
   for (var i = 0, l = (width + 2 * lmax) * (height + 2 * lmax); i < l; ++i) {
@@ -48,13 +48,13 @@ function createWhiteNoiseTextureArray() {
 
 function createCoordinatesTextureArray(index) {
   var imageData = document.createElement('canvas').getContext('2d').createImageData(width, height),
-      ans = imageData.data,//new Uint8Array(width * height * 4),
+      ans = imageData.data,
       rand = Math.random;
 
   for (var i = 0, l = width * height; i < l; ++i) {
     var idx = i * 4,
-        value = rand(),
-        val = packFloatToRGBA(value);
+        value = (index(i) + rand()),
+        val = packFloatToRGBA(value / maxDim);
 
     val[0] = (val[0] * 255) >> 0;
     val[1] = (val[1] * 255) >> 0;
@@ -105,6 +105,7 @@ function init() {
       noCache: true
     }],
     onError: function(e) {
+      throw e;
       console.log(e);
     },
     onLoad: function(app) {
@@ -113,8 +114,8 @@ function init() {
           canvas = app.canvas;
 
       app.setFrameBuffer('N', {
-        width: width, //+ lmax * 2,
-        height: height, //+ lmax * 2,
+        width: width,
+        height: height,
         bindToTexture: {
           data: {
             value: noise
@@ -140,6 +141,18 @@ function init() {
             value: cy
           }
         }
+      });
+
+      app.setFrameBuffer('cxp', {
+        width: width,
+        height: height,
+        bindToTexture: {}
+      });
+
+      app.setFrameBuffer('cyp', {
+        width: width,
+        height: height,
+        bindToTexture: {}
       });
 
       app.setFrameBuffer('Np', {
@@ -172,30 +185,48 @@ function init() {
 
       var noiseTex = true;
       function draw(noiseTex) {
+        var cxFrom, cxTo, cyFrom, cyTo, noiseFrom, noiseTo;
+        if (noiseTex) {
+          cxFrom = 'cx',
+          cxTo = 'cxp',
+          cyFrom = 'cy',
+          cyTo = 'cyp',
+          noiseFrom = 'N',
+          noiseTo = 'Np';
+        } else {
+          cxFrom = 'cxp',
+          cxTo = 'cx',
+          cyFrom = 'cyp',
+          cyTo = 'cy',
+          noiseFrom = 'Np',
+          noiseTo = 'N';
+        }
+
         Media.Image.postProcess({
-          fromTexture: ['cx-texture', 'cy-texture'],
-          toFrameBuffer: 'cx',
+          fromTexture: [ cxFrom + '-texture', cyFrom + '-texture' ],
+          toFrameBuffer: cxTo,
           program: 'coord-integration',
-          uniforms: uniforms({ cx: 1 })
+          uniforms: uniforms({ cxFlag: 1 })
         }).postProcess({
-          fromTexture: ['cx-texture', 'cy-texture'],
-          toFrameBuffer: 'cy',
+          fromTexture: [ cxFrom + '-texture', cyFrom + '-texture' ],
+          toFrameBuffer: cyTo,
           program: 'coord-integration',
-          uniforms: uniforms({ cx: 0 })
+          uniforms: uniforms({ cxFlag: 0 })
         }).postProcess({
-          fromTexture: ['cx-texture', 'cy-texture', noiseTex ? 'N-texture' : 'Np-texture'],
+          fromTexture: [ cxTo + '-texture', cyTo + '-texture', noiseFrom + '-texture' ],
           toFrameBuffer: 'Na',
           program: 'Na',
           uniforms: uniforms()
         }).postProcess({
-          fromTexture: ['cx-texture', 'cy-texture', noiseTex ? 'N-texture' : 'Np-texture'],
-          toFrameBuffer: noiseTex ? 'Np' : 'N',
+          fromTexture: [ cxTo + '-texture', cyTo + '-texture', noiseFrom + '-texture' ],
+          toFrameBuffer: noiseTo,
           toScreen: true,
           program: 'Np',
           uniforms: uniforms()
         });
       }
 
+      //draw(noiseTex);
       Fx.requestAnimationFrame(function loop() {
         draw(noiseTex);
         noiseTex = !noiseTex;

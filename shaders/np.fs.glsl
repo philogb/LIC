@@ -34,12 +34,17 @@ void main(void) {
   float x = gl_FragCoord.x;
   float y = gl_FragCoord.y;
   float b = lmax;
+  float maxDim = max(width, height) + 1.;
 
-  /*gl_FragColor = vec4(0, 0, 0, 1);*/
   vec2 coord = gl_FragCoord.xy / vec2(width, height);
-  float cpx = (floor(gl_FragCoord.x + unpackFloatFromVec4i(texture2D(sampler1, coord)))) / width;
-  float cpy = (floor(gl_FragCoord.y + unpackFloatFromVec4i(texture2D(sampler2, coord)))) / height;
+  vec4 cxPacked = texture2D(sampler1, coord);
+  float cx = unpackFloatFromVec4i(cxPacked) * maxDim;
+  vec4 cyPacked = texture2D(sampler2, coord);
+  float cy = unpackFloatFromVec4i(cyPacked) * maxDim;
+
+  float cpx = floor(cx) / width;
+  float cpy = floor(cy) / height;
   gl_FragColor = texture2D(sampler3, vec2(cpx, cpy));
-  /*gl_FragColor = texture2D(sampler3, vTexCoord1);*/
+  /*gl_FragColor = vec4(vec3(cy / 255.), 1);*/
 
 }

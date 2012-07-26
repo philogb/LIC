@@ -30,22 +30,20 @@ float unpackFloatFromVec4i(const vec4 value){
    return(dot(value, bitSh));
 }
 
-float lerpInTexture(float delta) {
-  return lmax / (width + 2. * lmax) + delta * width / (width + 2. * lmax);
-}
-
 void main(void) {
   float x = gl_FragCoord.x;
   float y = gl_FragCoord.y;
   float b = lmax;
+  float maxDim = max(width, height) + 1.;
 
-  vec2 coord  =  gl_FragCoord.xy / vec2(width, height);
+  vec2 coord = gl_FragCoord.xy / vec2(width, height);
+  vec4 cxPacked = texture2D(sampler1, coord);
+  float cx = unpackFloatFromVec4i(cxPacked) * maxDim;
+  vec4 cyPacked = texture2D(sampler2, coord);
+  float cy = unpackFloatFromVec4i(cyPacked) * maxDim;
 
-  float cpx = (gl_FragCoord.x + unpackFloatFromVec4i(texture2D(sampler1, coord))) / width;
-  float cpy = (gl_FragCoord.y + unpackFloatFromVec4i(texture2D(sampler2, coord))) / height;
-
-  cpx = lerpInTexture(cpx);
-  cpy = lerpInTexture(cpy);
+  float cpx = cx / width;
+  float cpy = cy / height;
 
   gl_FragColor = texture2D(sampler3, vec2(cpx, cpy));
 }
