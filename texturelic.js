@@ -5,7 +5,7 @@ var width = 512, //canvas width
     maxDim = Math.max(width, height) + 1,
     vWidth = width, //domain width for the vector field
     vHeight = height, //domain height for the vector field
-    lmax = 20, //maximum displacement distance (in pixels)
+    lmax = 30, //maximum displacement distance (in pixels)
     vmax = 1; //maximum vector field value
 
 function fract(x) {
