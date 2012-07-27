@@ -30,7 +30,7 @@ float unpackFloatFromVec4i(const vec4 value){
    return(dot(value, bitSh));
 }
 
-vec2 field(vec2 point) {
+vec2 field2(vec2 point) {
   vec2 tpoint = point - vec2(width, height) / 2.;
   float norm = length(tpoint);
 
@@ -39,6 +39,29 @@ vec2 field(vec2 point) {
   }
 
   return vec2(-tpoint.y, tpoint.x) / norm;
+}
+
+vec2 field(vec2 point) {
+  vec2 tpoint = point - vec2(width, height) / 2.;
+  float norm = length(tpoint);
+
+  if (norm < 1e-5) {
+    return vec2(0);
+  }
+
+  return vec2(tpoint.y, tpoint.x) / norm;
+}
+
+vec2 field3(vec2 point) {
+  point -= vec2(width, height) / 2.;
+  float norm = length(point);
+
+  if (norm < 1e-5) {
+    return vec2(0);
+  } else if (norm > 1.) {
+    return point / norm;
+  }
+  return point;
 }
 
 void main(void) {
@@ -58,11 +81,15 @@ void main(void) {
     val = cx - (lmax / vmax) * field(vec2(rwv * cx, rhv * cy)).x;
     if (val < 0. || val > width) {
       val = cx;
+      gl_FragColor = vec4(1., 0, 0, 0);
+      return;
     }
   } else {
     val = cy - (lmax / vmax) * field(vec2(rwv * cx, rhv * cy)).y;
     if (val < 0. || val > height) {
       val = cy;
+      gl_FragColor = vec4(1., 0, 0, 0);
+      return;
     }
   }
   gl_FragColor = packFloatToVec4i(val / maxDim);

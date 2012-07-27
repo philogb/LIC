@@ -2,11 +2,11 @@ PhiloGL.unpack();
 
 var width = 512, //canvas width
     height = 512, //canvas height
-    maxDim = Math.max(width, height) + 1,
     vWidth = width, //domain width for the vector field
     vHeight = height, //domain height for the vector field
-    lmax = 30, //maximum displacement distance (in pixels)
-    vmax = 1; //maximum vector field value
+    lmax = 5, //maximum displacement distance (in pixels)
+    vmax = 1, //maximum vector field value
+    maxDim = Math.max(width, height) + 1;
 
 function fract(x) {
   return x - Math.floor(x);
@@ -87,6 +87,13 @@ function init() {
       id: 'coord-integration',
       vs: 'postprocess.vs.glsl',
       fs: 'ci.fs.glsl',
+      from: 'uris',
+      noCache: true
+    }, {
+      path: 'shaders/',
+      id: 'coord-reinit',
+      vs: 'postprocess.vs.glsl',
+      fs: 'cri.fs.glsl',
       from: 'uris',
       noCache: true
     }, {
@@ -194,10 +201,10 @@ function init() {
           noiseFrom = 'N',
           noiseTo = 'Np';
         } else {
-          cxFrom = 'cxp',
-          cxTo = 'cx',
-          cyFrom = 'cyp',
-          cyTo = 'cy',
+          cxFrom = 'cx',
+          cxTo = 'cxp',
+          cyFrom = 'cy',
+          cyTo = 'cyp',
           noiseFrom = 'Np',
           noiseTo = 'N';
         }
@@ -223,10 +230,19 @@ function init() {
           toScreen: true,
           program: 'Np',
           uniforms: uniforms()
+        }).postProcess({
+          fromTexture: [ cxTo + '-texture' ],
+          toFrameBuffer: cxFrom,
+          program: 'coord-reinit',
+          uniforms: uniforms({ cxFlag: 1 })
+        }).postProcess({
+          fromTexture: [ cyTo + '-texture' ],
+          toFrameBuffer: cyFrom,
+          program: 'coord-reinit',
+          uniforms: uniforms({ cxFlag: 0 })
         });
       }
 
-      //draw(noiseTex);
       Fx.requestAnimationFrame(function loop() {
         draw(noiseTex);
         noiseTex = !noiseTex;
