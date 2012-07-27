@@ -30,6 +30,17 @@ float unpackFloatFromVec4i(const vec4 value){
    return(dot(value, bitSh));
 }
 
+vec2 field(vec2 point) {
+  vec2 tpoint = point - vec2(width, height) / 2.;
+  float norm = length(tpoint);
+
+  if (norm < 1e-8) {
+    return vec2(0);
+  }
+
+  return vec2(-tpoint.y, tpoint.x) / norm;
+}
+
 vec2 field2(vec2 point) {
   vec2 tpoint = point - vec2(width, height) / 2.;
   float norm = length(tpoint);
@@ -38,18 +49,7 @@ vec2 field2(vec2 point) {
     return vec2(0);
   }
 
-  return vec2(-tpoint.y, tpoint.x) / norm;
-}
-
-vec2 field(vec2 point) {
-  vec2 tpoint = point - vec2(width, height) / 2.;
-  float norm = length(tpoint);
-
-  if (norm < 1e-5) {
-    return vec2(0);
-  }
-
-  return vec2(tpoint.y, tpoint.x) / norm;
+  return sin(vec2(tpoint.y, tpoint.x));// / norm;
 }
 
 vec2 field3(vec2 point) {

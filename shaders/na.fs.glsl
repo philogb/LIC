@@ -7,6 +7,7 @@ varying vec2 vTexCoord1;
 uniform sampler2D sampler1;
 uniform sampler2D sampler2;
 uniform sampler2D sampler3;
+uniform sampler2D sampler4;
 
 uniform float width;
 uniform float height;
@@ -42,14 +43,21 @@ void main(void) {
   vec4 cyPacked = texture2D(sampler2, coord);
   float cy = unpackFloatFromVec4i(cyPacked) * maxDim;
 
-  if (cxPacked.r > 1.0 || cyPacked.r > 1.0) {
-    gl_FragColor = vec4(0, 0, 0, 1);
-    return;
-  }
-
   float cpx = cx / width;
   float cpy = cy / height;
+  vec2 texCoord = vec2(cpx, cpy);
+  vec4 curValue;
 
-  gl_FragColor = texture2D(sampler3, vec2(cpx, cpy));
+  if (cxPacked.r > 1.0 || cyPacked.r > 1.0) {
+    curValue = vec4(0, 0, 0, 1);
+  } else {
+    curValue = texture2D(sampler3, texCoord);
+  }
+
+  vec4 blendValue = texture2D(sampler4, vTexCoord1);
+
+  gl_FragColor = mix(curValue, blendValue, 0.95);
+
+  /*gl_FragColor = curValue + blendValue * 0.97;*/
 }
 

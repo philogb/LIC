@@ -1,10 +1,10 @@
 PhiloGL.unpack();
 
-var width = 512, //canvas width
-    height = 512, //canvas height
+var width = 1024, //canvas width
+    height = 1024, //canvas height
     vWidth = width, //domain width for the vector field
     vHeight = height, //domain height for the vector field
-    lmax = 5, //maximum displacement distance (in pixels)
+    lmax = 10, //maximum displacement distance (in pixels)
     vmax = 1, //maximum vector field value
     maxDim = Math.max(width, height) + 1;
 
@@ -46,6 +46,21 @@ function createWhiteNoiseTextureArray() {
   return imageData;
 }
 
+function createImageTextureArray(filename, callback) {
+  var canvas = document.createElement('canvas'),
+      ctx = canvas.getContext('2d');
+
+  canvas.width = width;
+  canvas.height = height;
+
+  var img = new Image();
+  img.src = filename;
+  img.onload = function() {
+    ctx.drawImage(img, 0, 0);
+    callback(ctx.getImageData(0, 0, width, height));
+  };
+}
+
 function createCoordinatesTextureArray(index) {
   var imageData = document.createElement('canvas').getContext('2d').createImageData(width, height),
       ans = imageData.data,
@@ -71,6 +86,12 @@ function createCoordinatesTextureArray(index) {
 }
 
 //create texture arrays
+//var img;
+//createImageTextureArray('img/bck2.jpg', function(imgData) {
+  //img = imgData;
+  //init();
+//});
+
 var noise = createWhiteNoiseTextureArray();
 var cx = createCoordinatesTextureArray(function(i) { return (i % width); });
 var cy = createCoordinatesTextureArray(function(i) { return Math.floor(i / width); });
@@ -174,6 +195,12 @@ function init() {
         bindToTexture: {}
       });
 
+      app.setFrameBuffer('Nb', {
+        width: width,
+        height: height,
+        bindToTexture: {}
+      });
+
       function uniforms(opt) {
         opt = opt || {};
         var ans = {
@@ -200,6 +227,8 @@ function init() {
           cyTo = 'cyp',
           noiseFrom = 'N',
           noiseTo = 'Np';
+          blendFrom = 'Nb';
+          blendTo = 'Na';
         } else {
           cxFrom = 'cx',
           cxTo = 'cxp',
@@ -207,6 +236,8 @@ function init() {
           cyTo = 'cyp',
           noiseFrom = 'Np',
           noiseTo = 'N';
+          blendFrom = 'Na';
+          blendTo = 'Nb';
         }
 
         Media.Image.postProcess({
@@ -220,14 +251,14 @@ function init() {
           program: 'coord-integration',
           uniforms: uniforms({ cxFlag: 0 })
         }).postProcess({
-          fromTexture: [ cxTo + '-texture', cyTo + '-texture', noiseFrom + '-texture' ],
-          toFrameBuffer: 'Na',
+          fromTexture: [ cxTo + '-texture', cyTo + '-texture', noiseFrom + '-texture', blendFrom + '-texture' ],
+          toFrameBuffer: blendTo,
           program: 'Na',
+          toScreen: true,
           uniforms: uniforms()
         }).postProcess({
           fromTexture: [ cxTo + '-texture', cyTo + '-texture', noiseFrom + '-texture' ],
           toFrameBuffer: noiseTo,
-          toScreen: true,
           program: 'Np',
           uniforms: uniforms()
         }).postProcess({
