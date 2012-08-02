@@ -30,14 +30,13 @@ function unpackFloatFromVec4i(value){
 }
 
 
-function createWhiteNoiseTextureArray() {
+function createWhiteNoiseTextureArray(cmp) {
   var imageData = document.createElement('canvas').getContext('2d').createImageData(width, height),
-      ans = imageData.data,
-      rand = Math.random;
+      ans = imageData.data;
 
   for (var i = 0, l = (width + 2 * lmax) * (height + 2 * lmax); i < l; ++i) {
     var idx = i * 4,
-        val = rand() >= 0.5 ? 255 : 0;
+        val = cmp() ? 255 : 0;
 
     ans[idx] = ans[idx + 1] = ans[idx + 2] = val;
     ans[idx + 3] = 255;
@@ -91,8 +90,9 @@ function createCoordinatesTextureArray(index) {
   //img = imgData;
   //init();
 //});
-
-var noise = createWhiteNoiseTextureArray();
+var rnd = Math.random;
+var noise = createWhiteNoiseTextureArray(function() { return rnd() >= 0.5; });
+var swapPixelProb = createWhiteNoiseTextureArray(function() { return rnd() <= 0.1; });
 var cx = createCoordinatesTextureArray(function(i) { return (i % width); });
 var cy = createCoordinatesTextureArray(function(i) { return Math.floor(i / width); });
 
@@ -140,6 +140,22 @@ function init() {
       var gl = app.gl,
           program = app.program,
           canvas = app.canvas;
+
+      app.setTexture('white-noise', {
+        width: width,
+        height: height,
+        data: {
+          value: noise
+        }
+      });
+
+      app.setTexture('prob-noise', {
+        width: width,
+        height: height,
+        data: {
+          value: swapPixelProb
+        }
+      });
 
       app.setFrameBuffer('N', {
         width: width,
@@ -192,13 +208,31 @@ function init() {
       app.setFrameBuffer('Na', {
         width: width,
         height: height,
-        bindToTexture: {}
+        bindToTexture: {
+          pixelStore: [],
+          parameters: [{
+            name: gl.TEXTURE_MAG_FILTER,
+            value: gl.LINEAR
+          }, {
+            name: gl.TEXTURE_MIN_FILTER,
+            value: gl.LINEAR
+          }]
+        }
       });
 
       app.setFrameBuffer('Nb', {
         width: width,
         height: height,
-        bindToTexture: {}
+        bindToTexture: {
+          pixelStore: [],
+          parameters: [{
+            name: gl.TEXTURE_MAG_FILTER,
+            value: gl.LINEAR
+          }, {
+            name: gl.TEXTURE_MIN_FILTER,
+            value: gl.LINEAR
+          }]
+        }
       });
 
       function uniforms(opt) {
@@ -209,7 +243,8 @@ function init() {
           vWidth: vWidth,
           vHeight: vHeight,
           lmax: lmax,
-          vmax: vmax
+          vmax: vmax,
+          maxDim: maxDim
         };
         for (var k in opt) {
           ans[k] = opt[k];
@@ -251,16 +286,16 @@ function init() {
           program: 'coord-integration',
           uniforms: uniforms({ cxFlag: 0 })
         }).postProcess({
-          fromTexture: [ cxTo + '-texture', cyTo + '-texture', noiseFrom + '-texture', blendFrom + '-texture' ],
+          fromTexture: [ cxTo + '-texture', cyTo + '-texture', noiseFrom + '-texture', blendFrom + '-texture', 'white-noise', 'prob-noise' ],
           toFrameBuffer: blendTo,
           program: 'Na',
           toScreen: true,
           uniforms: uniforms()
         }).postProcess({
-          fromTexture: [ cxTo + '-texture', cyTo + '-texture', noiseFrom + '-texture' ],
+          fromTexture: [ cxTo + '-texture', cyTo + '-texture', noiseFrom + '-texture', 'white-noise', 'prob-noise' ],
           toFrameBuffer: noiseTo,
           program: 'Np',
-          uniforms: uniforms()
+          uniforms: uniforms({ t: Date.now() })
         }).postProcess({
           fromTexture: [ cxTo + '-texture' ],
           toFrameBuffer: cxFrom,

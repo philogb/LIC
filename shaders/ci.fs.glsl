@@ -14,6 +14,7 @@ uniform float vHeight;
 uniform float vmax;
 uniform float lmax;
 uniform float cxFlag;
+uniform float maxDim;
 
 // Packing a [0-1] float value into a 4D vector where each component will be a 8-bits integer
 vec4 packFloatToVec4i(const float value) {
@@ -35,13 +36,13 @@ vec2 field(vec2 point) {
   float norm = length(tpoint);
 
   if (norm < 1e-8) {
-    return vec2(0);
+    return vec2(-tpoint.y, tpoint.x);
   }
 
   return vec2(-tpoint.y, tpoint.x) / norm;
 }
 
-vec2 field2(vec2 point) {
+vec2 field3(vec2 point) {
   vec2 tpoint = point - vec2(width, height) / 2.;
   float norm = length(tpoint);
 
@@ -52,7 +53,7 @@ vec2 field2(vec2 point) {
   return sin(vec2(tpoint.y, tpoint.x));// / norm;
 }
 
-vec2 field3(vec2 point) {
+vec2 field2(vec2 point) {
   point -= vec2(width, height) / 2.;
   float norm = length(point);
 
@@ -64,11 +65,11 @@ vec2 field3(vec2 point) {
   return point;
 }
 
+//4.3 Coordinate Integration
 void main(void) {
   vec2 coord = gl_FragCoord.xy / vec2(width, height);
   float rwv = (vWidth - 1.) / width;
   float rhv = (vHeight - 1.) / height;
-  float maxDim = max(width, height) + 1.;
 
   vec4 cxPacked = texture2D(sampler1, coord);
   float cx = unpackFloatFromVec4i(cxPacked) * maxDim;
@@ -79,6 +80,7 @@ void main(void) {
   float val;
   if (cxFlag == 1.0) {
     val = cx - (lmax / vmax) * field(vec2(rwv * cx, rhv * cy)).x;
+    //4.4 Noise Advection
     if (val < 0. || val > width) {
       val = cx;
       gl_FragColor = vec4(1., 0, 0, 0);
@@ -86,6 +88,7 @@ void main(void) {
     }
   } else {
     val = cy - (lmax / vmax) * field(vec2(rwv * cx, rhv * cy)).y;
+    //4.4 Noise Advection
     if (val < 0. || val > height) {
       val = cy;
       gl_FragColor = vec4(1., 0, 0, 0);
