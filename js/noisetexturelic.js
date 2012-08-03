@@ -4,8 +4,8 @@ var width = 1024, //canvas width
     height = 1024, //canvas height
     vWidth = width, //domain width for the vector field
     vHeight = height, //domain height for the vector field
-    lmax = 10, //maximum displacement distance (in pixels)
-    vmax = 1, //maximum vector field value
+    lmax = 15, //maximum displacement distance (in pixels)
+    vmax = 512, //maximum vector field value
     maxDim = Math.max(width, height) + 1;
 
 function fract(x) {
@@ -45,21 +45,6 @@ function createWhiteNoiseTextureArray(cmp) {
   return imageData;
 }
 
-function createImageTextureArray(filename, callback) {
-  var canvas = document.createElement('canvas'),
-      ctx = canvas.getContext('2d');
-
-  canvas.width = width;
-  canvas.height = height;
-
-  var img = new Image();
-  img.src = filename;
-  img.onload = function() {
-    ctx.drawImage(img, 0, 0);
-    callback(ctx.getImageData(0, 0, width, height));
-  };
-}
-
 function createCoordinatesTextureArray(index) {
   var imageData = document.createElement('canvas').getContext('2d').createImageData(width, height),
       ans = imageData.data,
@@ -84,12 +69,6 @@ function createCoordinatesTextureArray(index) {
   return imageData;
 }
 
-//create texture arrays
-//var img;
-//createImageTextureArray('img/bck2.jpg', function(imgData) {
-  //img = imgData;
-  //init();
-//});
 var rnd = Math.random;
 var noise = createWhiteNoiseTextureArray(function() { return rnd() >= 0.5; });
 var swapPixelProb = createWhiteNoiseTextureArray(function() { return rnd() <= 0.1; });
@@ -104,28 +83,28 @@ function init() {
 
   PhiloGL('canvas', {
     program: [{
-      path: 'shaders/',
+      path: 'shaders/noise/',
       id: 'coord-integration',
       vs: 'postprocess.vs.glsl',
       fs: 'ci.fs.glsl',
       from: 'uris',
       noCache: true
     }, {
-      path: 'shaders/',
+      path: 'shaders/noise/',
       id: 'coord-reinit',
       vs: 'postprocess.vs.glsl',
       fs: 'cri.fs.glsl',
       from: 'uris',
       noCache: true
     }, {
-      path: 'shaders/',
+      path: 'shaders/noise/',
       id: 'Np',
       vs: 'postprocess.vs.glsl',
       fs: 'np.fs.glsl',
       from: 'uris',
       noCache: true
     }, {
-      path: 'shaders/',
+      path: 'shaders/noise/',
       id: 'Na',
       vs: 'postprocess.vs.glsl',
       fs: 'na.fs.glsl',
@@ -209,7 +188,6 @@ function init() {
         width: width,
         height: height,
         bindToTexture: {
-          pixelStore: [],
           parameters: [{
             name: gl.TEXTURE_MAG_FILTER,
             value: gl.LINEAR
@@ -224,7 +202,6 @@ function init() {
         width: width,
         height: height,
         bindToTexture: {
-          pixelStore: [],
           parameters: [{
             name: gl.TEXTURE_MAG_FILTER,
             value: gl.LINEAR
@@ -295,7 +272,7 @@ function init() {
           fromTexture: [ cxTo + '-texture', cyTo + '-texture', noiseFrom + '-texture', 'white-noise', 'prob-noise' ],
           toFrameBuffer: noiseTo,
           program: 'Np',
-          uniforms: uniforms({ t: Date.now() })
+          uniforms: uniforms()
         }).postProcess({
           fromTexture: [ cxTo + '-texture' ],
           toFrameBuffer: cxFrom,

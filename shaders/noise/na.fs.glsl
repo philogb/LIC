@@ -19,6 +19,11 @@ uniform float vmax;
 uniform float lmax;
 uniform float maxDim;
 
+vec2 field(vec2 point) {
+  vec2 tpoint = point - vec2(width, height) / 2.;
+  return vec2(tpoint.y, tpoint.x);
+}
+
 // Packing a [0-1] float value into a 4D vector where each component will be a 8-bits integer
 vec4 packFloatToVec4i(const float value) {
    const vec4 bitSh = vec4(256.0 * 256.0 * 256.0, 256.0 * 256.0, 256.0, 1.0);
@@ -62,12 +67,19 @@ void main(void) {
 
   //4.7 Noise Injection
   if (texture2D(sampler6, pixel).r > 0.5) {
-    texel = vec4(vec3(1. - texel.rgb), 1);
+    /*texel = vec4(1. - texel.rgb, 1.);*/
+    texel = 1. - texel;
   }
+
+  //4.10.2 Velocity Mask
+  const float m = 1.;
+  const float n = 1.;
+  vec4 alpha = (1. - pow(1. - length(field(vec2(cx, cy))) / vmax, m)) * (1. - pow(1. - texel, vec4(n)));
+  texel = alpha;
 
   //4.9 Noise Blending
   vec4 blendValue = texture2D(sampler4, vTexCoord1);
 
-  gl_FragColor = mix(texel, blendValue, 0.95);
+  gl_FragColor = mix(texel, blendValue, 0.98);
 }
 
