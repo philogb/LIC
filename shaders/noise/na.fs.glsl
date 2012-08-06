@@ -21,8 +21,28 @@ uniform float maxDim;
 
 vec2 field(vec2 point) {
   vec2 tpoint = point - vec2(width, height) / 2.;
-  return vec2(tpoint.y, tpoint.x);
+  return vec2(-tpoint.y, tpoint.x);
 }
+
+//electric dipole
+/*vec2 field(vec2 point, float t) {*/
+  /*vec2 tpoint = (point - vec2(width, height) / 2.) / 50.;*/
+  /*const float charge = 1000.;*/
+  /*float rq = 10.;*/
+  /*vec2 v1 = vec2(rq, 0) - tpoint;*/
+  /*float d1 = length(v1);*/
+  /*vec2 v2 = vec2(-rq, 0) - tpoint;*/
+  /*float d2 = length(v2);*/
+
+  /*if (d1 < 3. || d2 < 3.) {*/
+    /*return vec2(0);*/
+  /*}*/
+
+  /*v1 = v1 / d1;*/
+  /*v2 = v2 / d2;*/
+
+  /*return charge / (d1 * d1) * v1 - charge / (d2 * d2) * v2;*/
+/*}*/
 
 // Packing a [0-1] float value into a 4D vector where each component will be a 8-bits integer
 vec4 packFloatToVec4i(const float value) {
@@ -74,12 +94,13 @@ void main(void) {
   //4.10.2 Velocity Mask
   const float m = 1.;
   const float n = 1.;
-  vec4 alpha = (1. - pow(1. - length(field(vec2(cx, cy))) / vmax, m)) * (1. - pow(1. - texel, vec4(n)));
+  float ratio = min(length(field(vec2(cx, cy))) / vmax, 1.);
+  vec4 alpha = (1. - pow(1. - ratio, m)) * (1. - pow(1. - texel, vec4(n)));
   texel = alpha;
 
   //4.9 Noise Blending
   vec4 blendValue = texture2D(sampler4, vTexCoord1);
 
-  gl_FragColor = mix(texel, blendValue, 0.98);
+  gl_FragColor = mix(texel, blendValue, 0.96);
 }
 

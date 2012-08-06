@@ -50,7 +50,9 @@ void main(void) {
   vec2 pixel = vec2(cpx, cpy);
 
   //4.5 Edge Treatment
-  if (cxPacked.r == 1. && cxPacked.g == 0. || cyPacked.r == 1. && cyPacked.g == 0.) {
+  if (cxPacked.r == 1. && cxPacked.g == 0.
+   || cyPacked.r == 1. && cyPacked.g == 0.) {
+    //out of bounds. inject random white noise.
     texel = texture2D(sampler4, pixel);
   } else {
     texel = texture2D(sampler3, pixel);

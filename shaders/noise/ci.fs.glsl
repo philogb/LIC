@@ -33,8 +33,28 @@ float unpackFloatFromVec4i(const vec4 value){
 
 vec2 field(vec2 point) {
   vec2 tpoint = point - vec2(width, height) / 2.;
-  return vec2(tpoint.y, tpoint.x);
+  return vec2(-tpoint.y, tpoint.x);
 }
+
+//electric dipole
+/*vec2 field(vec2 point) {*/
+  /*vec2 tpoint = (point - vec2(width, height) / 2.) / 50.;*/
+  /*const float charge = 1000.;*/
+  /*float rq = 10.;*/
+  /*vec2 v1 = vec2(rq, 0) - tpoint;*/
+  /*float d1 = length(v1);*/
+  /*vec2 v2 = vec2(-rq, 0) - tpoint;*/
+  /*float d2 = length(v2);*/
+
+  /*if (d1 < 3. || d2 < 3.) {*/
+    /*return vec2(0);*/
+  /*}*/
+
+  /*v1 = v1 / d1;*/
+  /*v2 = v2 / d2;*/
+
+  /*return charge / (d1 * d1) * v1 - charge / (d2 * d2) * v2;*/
+/*}*/
 
 //4.3 Coordinate Integration
 void main(void) {

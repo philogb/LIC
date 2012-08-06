@@ -4,8 +4,8 @@ var width = 1024, //canvas width
     height = 1024, //canvas height
     vWidth = width, //domain width for the vector field
     vHeight = height, //domain height for the vector field
-    lmax = 15, //maximum displacement distance (in pixels)
-    vmax = 512, //maximum vector field value
+    lmax = 30, //maximum displacement distance (in pixels)
+    vmax = 800, //maximum vector field value
     maxDim = Math.max(width, height) + 1;
 
 function fract(x) {
@@ -34,7 +34,7 @@ function createWhiteNoiseTextureArray(cmp) {
   var imageData = document.createElement('canvas').getContext('2d').createImageData(width, height),
       ans = imageData.data;
 
-  for (var i = 0, l = (width + 2 * lmax) * (height + 2 * lmax); i < l; ++i) {
+  for (var i = 0, l = width * height; i < l; ++i) {
     var idx = i * 4,
         val = cmp() ? 255 : 0;
 
@@ -44,6 +44,7 @@ function createWhiteNoiseTextureArray(cmp) {
 
   return imageData;
 }
+
 
 function createCoordinatesTextureArray(index) {
   var imageData = document.createElement('canvas').getContext('2d').createImageData(width, height),
