@@ -6,8 +6,8 @@ varying vec2 vTexCoord1;
 
 uniform sampler2D sampler1;
 uniform sampler2D sampler2;
+
 uniform sampler2D sampler3;
-uniform sampler2D sampler4;
 
 uniform float width;
 uniform float height;
@@ -17,6 +17,7 @@ uniform float vmax;
 uniform float lmax;
 uniform float cxFlag;
 uniform float maxDim;
+uniform float sgn;
 
 // Packing a [0-1] float value into a 4D vector where each component will be a 8-bits integer
 vec4 packFloatToVec4i(const float value) {
@@ -35,35 +36,22 @@ float unpackFloatFromVec4i(const vec4 value){
 
 //4.3 Coordinate Integration
 void main(void) {
-  vec2 coord = gl_FragCoord.xy / vec2(width, height);
   float rwv = (vWidth - 1.) / width;
   float rhv = (vHeight - 1.) / height;
 
-  vec4 cxPacked = texture2D(sampler1, coord);
+  vec4 cxPacked = texture2D(sampler1, vTexCoord1);
+  vec4 cyPacked = texture2D(sampler2, vTexCoord1);
   float cx = unpackFloatFromVec4i(cxPacked) * maxDim;
-
-  vec4 cyPacked = texture2D(sampler2, coord);
   float cy = unpackFloatFromVec4i(cyPacked) * maxDim;
 
   float val;
+  vec2 coord = vec2( rwv * cx, rhv * cy );
+  vec4 vPacked = texture2D(sampler3, coord);
+  float v = (unpackFloatFromVec4i(vPacked) - .5) * maxDim;
   if (cxFlag == 1.0) {
-    float vx = (unpackFloatFromVec4i(texture2D(sampler3, vTexCoord1)) - .5) * maxDim * 2.;
-    val = cx - (lmax / vmax) * vx;
-    //4.4 Noise Advection
-    if (val < 0. || val > width) {
-      val = cx;
-      gl_FragColor = vec4(1., 0, 0, 0);
-      return;
-    }
+    val = mod(cx + sgn * v + width, width);
   } else {
-    float vy = (unpackFloatFromVec4i(texture2D(sampler4, vTexCoord1)) - .5) * maxDim * 2.;
-    val = cy - (lmax / vmax) * vy;
-    //4.4 Noise Advection
-    if (val < 0. || val > height) {
-      val = cy;
-      gl_FragColor = vec4(1., 0, 0, 0);
-      return;
-    }
+    val = mod(cy + sgn * v + height, height);
   }
   gl_FragColor = packFloatToVec4i(val / maxDim);
 }
