@@ -31,8 +31,6 @@ float unpackFloatFromVec4i(const vec4 value){
 
 //4.8 Coordinate Re-Initialization
 void main(void) {
-  float rwv = (vWidth - 1.) / width;
-  float rhv = (vHeight - 1.) / height;
   vec2 coord = gl_FragCoord.xy / vec2(width, height);
 
   float idx;

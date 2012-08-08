@@ -8,7 +8,6 @@ uniform sampler2D sampler1;
 uniform sampler2D sampler2;
 uniform sampler2D sampler3;
 uniform sampler2D sampler4;
-uniform sampler2D sampler5;
 
 uniform float width;
 uniform float height;
@@ -17,6 +16,7 @@ uniform float vHeight;
 uniform float vmax;
 uniform float lmax;
 uniform float maxDim;
+uniform float enable;
 
 // Packing a [0-1] float value into a 4D vector where each component will be a 8-bits integer
 vec4 packFloatToVec4i(const float value) {
@@ -50,16 +50,19 @@ void main(void) {
   vec2 pixel = vec2(cpx, cpy);
 
   //4.5 Edge Treatment
-  if (cxPacked.r == 1. && cxPacked.g == 0. || cyPacked.r == 1. && cyPacked.g == 0.) {
-    texel = texture2D(sampler4, pixel);
+  if (cxPacked.r == 1. && cxPacked.g == 0.
+   || cyPacked.r == 1. && cyPacked.g == 0.) {
+    //out of bounds. inject transparent.
+    texel = vec4(0);
   } else {
     texel = texture2D(sampler3, pixel);
   }
 
-  //4.7 Noise Injection
-  if (texture2D(sampler5, pixel).r > 0.5) {
-    texel = vec4(vec3(1. - texel.rgb), 1);
+  vec4 background = texture2D(sampler4, vTexCoord1);
+
+  if (enable > -0.99) {
+    background = vec4(0);
   }
 
-  gl_FragColor = texel;
+  gl_FragColor = max(texel, background);
 }

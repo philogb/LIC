@@ -1,12 +1,46 @@
 PhiloGL.unpack();
 
-var width = 1024, //canvas width
-    height = 1024, //canvas height
+var alic = false,
+    width = 512, //canvas width
+    height = 512, //canvas height
     vWidth = width, //domain width for the vector field
     vHeight = height, //domain height for the vector field
-    lmax = 12, //maximum displacement distance (in pixels)
-    vmax = 1, //maximum vector field value
-    maxDim = Math.max(width, height) + 1;
+    lmax = 20, //maximum displacement distance (in pixels)
+    vmax = 363, //maximum vector field value
+    maxDim = Math.max(width, height) + 1,
+    ctx =  document.createElement('canvas').getContext('2d'),
+    field = function(x, y) {
+      x -= width / 2;
+      y -= height / 2;
+      return [-y, x];
+    };
+
+//lmax = 25;
+//vmax = 200;
+//field = function(x, y) {
+  //x -= width / 2;
+  //y -= height / 2;
+  //x /= 50;
+  //y /= 50;
+  //var charge = 10000,
+      //rq = 10,
+      //v1 = [ rq - x, -y],
+      //v2 = [-rq - x, -y],
+      //d1 = Math.sqrt(v1[0] * v1[0] + v1[1] * v1[1]),
+      //d2 = Math.sqrt(v2[0] * v2[0] + v2[1] * v2[1]);
+
+  //if (d1 < 3 || d2 < 3) {
+    //return [0, 0];
+  //}
+
+  //v1[0] = charge / (d1 * d1 * d1) * v1[0];
+  //v1[1] = charge / (d1 * d1 * d1) * v1[1];
+
+  //v2[0] = charge / (d2 * d2 * d2) * v2[0];
+  //v2[1] = charge / (d2 * d2 * d2) * v2[1];
+
+  //return [v1[0] - v2[0], v1[1] - v2[1]];
+//};
 
 function fract(x) {
   return x - Math.floor(x);
@@ -30,19 +64,34 @@ function unpackFloatFromVec4i(value){
 }
 
 
-function createWhiteNoiseTextureArray(cmp) {
-  var imageData = document.createElement('canvas').getContext('2d').createImageData(width, height),
-      ans = imageData.data;
+function createFieldTextureArray(field) {
+  var vxImageData = ctx.createImageData(width, height),
+      vyImageData = ctx.createImageData(width, height),
+      vx = vxImageData.data,
+      vy = vyImageData.data,
+      v, pvx, pvy, idx;
 
-  for (var i = 0, l = (width + 2 * lmax) * (height + 2 * lmax); i < l; ++i) {
-    var idx = i * 4,
-        val = cmp() ? 255 : 0;
+  for (var x = 0; x < width; ++x) {
+    for (var y = 0; y < height; ++y) {
+      idx = (x + y * width) * 4;
+      v = field(x, height - y);
+      pvx = v[0] / (2 * maxDim) + 0.5;
+      pvy = v[1] / (2 * maxDim) + 0.5;
+      pvx = packFloatToRGBA(pvx);
+      pvy = packFloatToRGBA(pvy);
+      vx[idx    ] = (pvx[0] * 255) >> 0;
+      vx[idx + 1] = (pvx[1] * 255) >> 0;
+      vx[idx + 2] = (pvx[2] * 255) >> 0;
+      vx[idx + 3] = (pvx[3] * 255) >> 0;
 
-    ans[idx] = ans[idx + 1] = ans[idx + 2] = val;
-    ans[idx + 3] = 255;
+      vy[idx    ] = (pvy[0] * 255) >> 0;
+      vy[idx + 1] = (pvy[1] * 255) >> 0;
+      vy[idx + 2] = (pvy[2] * 255) >> 0;
+      vy[idx + 3] = (pvy[3] * 255) >> 0;
+    }
   }
 
-  return imageData;
+  return [vxImageData, vyImageData];
 }
 
 function createImageTextureArray(filename, callback) {
@@ -61,13 +110,13 @@ function createImageTextureArray(filename, callback) {
 }
 
 function createCoordinatesTextureArray(index) {
-  var imageData = document.createElement('canvas').getContext('2d').createImageData(width, height),
+  var imageData = ctx.createImageData(width, height),
       ans = imageData.data,
       rand = Math.random;
 
   for (var i = 0, l = width * height; i < l; ++i) {
     var idx = i * 4,
-        value = (index(i) + rand()),
+        value = index(i),
         val = packFloatToRGBA(value / maxDim);
 
     val[0] = (val[0] * 255) >> 0;
@@ -84,19 +133,12 @@ function createCoordinatesTextureArray(index) {
   return imageData;
 }
 
-//create texture arrays
-//var img;
-//createImageTextureArray('img/bck2.jpg', function(imgData) {
-  //img = imgData;
-  //init();
-//});
-var rnd = Math.random;
-var noise = createWhiteNoiseTextureArray(function() { return rnd() >= 0.5; });
-var swapPixelProb = createWhiteNoiseTextureArray(function() { return rnd() <= 0.1; });
-var cx = createCoordinatesTextureArray(function(i) { return (i % width); });
-var cy = createCoordinatesTextureArray(function(i) { return Math.floor(i / width); });
+function init(img) {
+  var rnd = Math.random;
+  var cx = createCoordinatesTextureArray(function(i) { return (i % width) + rnd(); });
+  var cy = createCoordinatesTextureArray(function(i) { return Math.floor(i / width) + rnd(); });
+  var v = createFieldTextureArray(field);
 
-function init() {
 
   var canvas = document.getElementById('canvas');
   canvas.width = width;
@@ -104,31 +146,59 @@ function init() {
 
   PhiloGL('canvas', {
     program: [{
-      path: 'shaders/',
+      path: 'shaders/dye/',
       id: 'coord-integration',
       vs: 'postprocess.vs.glsl',
       fs: 'ci.fs.glsl',
       from: 'uris',
       noCache: true
     }, {
-      path: 'shaders/',
+      path: 'shaders/dye/',
       id: 'coord-reinit',
       vs: 'postprocess.vs.glsl',
       fs: 'cri.fs.glsl',
       from: 'uris',
       noCache: true
     }, {
-      path: 'shaders/',
+      path: 'shaders/dye/',
       id: 'Np',
       vs: 'postprocess.vs.glsl',
       fs: 'np.fs.glsl',
       from: 'uris',
       noCache: true
     }, {
-      path: 'shaders/',
+      path: 'shaders/dye/',
       id: 'Na',
       vs: 'postprocess.vs.glsl',
       fs: 'na.fs.glsl',
+      from: 'uris',
+      noCache: true
+    }, {
+      path: 'shaders/dye/',
+      id: 'alic-init',
+      vs: 'postprocess.vs.glsl',
+      fs: 'alic-init.fs.glsl',
+      from: 'uris',
+      noCache: true
+    }, {
+      path: 'shaders/dye/',
+      id: 'alic-int',
+      vs: 'postprocess.vs.glsl',
+      fs: 'alic-int.fs.glsl',
+      from: 'uris',
+      noCache: true
+    }, {
+      path: 'shaders/dye/',
+      id: 'alic-accum',
+      vs: 'postprocess.vs.glsl',
+      fs: 'alic-accum.fs.glsl',
+      from: 'uris',
+      noCache: true
+    }, {
+      path: 'shaders/dye/',
+      id: 'alic-copy',
+      vs: 'postprocess.vs.glsl',
+      fs: 'alic-copy.fs.glsl',
       from: 'uris',
       noCache: true
     }],
@@ -141,19 +211,27 @@ function init() {
           program = app.program,
           canvas = app.canvas;
 
-      app.setTexture('white-noise', {
+      app.setTexture('field-x', {
         width: width,
         height: height,
         data: {
-          value: noise
+          value: v[0]
         }
       });
 
-      app.setTexture('prob-noise', {
+      app.setTexture('field-y', {
         width: width,
         height: height,
         data: {
-          value: swapPixelProb
+          value: v[1]
+        }
+      });
+
+      app.setTexture('background', {
+        width: width,
+        height: height,
+        data: {
+          value: img
         }
       });
 
@@ -162,7 +240,7 @@ function init() {
         height: height,
         bindToTexture: {
           data: {
-            value: noise
+            value: img
           }
         }
       });
@@ -209,7 +287,6 @@ function init() {
         width: width,
         height: height,
         bindToTexture: {
-          pixelStore: [],
           parameters: [{
             name: gl.TEXTURE_MAG_FILTER,
             value: gl.LINEAR
@@ -224,7 +301,20 @@ function init() {
         width: width,
         height: height,
         bindToTexture: {
-          pixelStore: [],
+          parameters: [{
+            name: gl.TEXTURE_MAG_FILTER,
+            value: gl.LINEAR
+          }, {
+            name: gl.TEXTURE_MIN_FILTER,
+            value: gl.LINEAR
+          }]
+        }
+      });
+
+      app.setFrameBuffer('Nlic', {
+        width: width,
+        height: height,
+        bindToTexture: {
           parameters: [{
             name: gl.TEXTURE_MAG_FILTER,
             value: gl.LINEAR
@@ -254,14 +344,15 @@ function init() {
 
       var noiseTex = true;
       function draw(noiseTex) {
-        var cxFrom, cxTo, cyFrom, cyTo, noiseFrom, noiseTo;
+        var cxFrom, cxTo, cyFrom, cyTo, noiseFrom, noiseTo, blendFrom, blendTo;
+
         if (noiseTex) {
           cxFrom = 'cx',
           cxTo = 'cxp',
           cyFrom = 'cy',
           cyTo = 'cyp',
-          noiseFrom = 'N',
-          noiseTo = 'Np';
+          texFrom = 'N',
+          texTo = 'Np';
           blendFrom = 'Nb';
           blendTo = 'Na';
         } else {
@@ -269,39 +360,48 @@ function init() {
           cxTo = 'cxp',
           cyFrom = 'cy',
           cyTo = 'cyp',
-          noiseFrom = 'Np',
-          noiseTo = 'N';
+          texFrom = 'Np',
+          texTo = 'N';
           blendFrom = 'Na';
           blendTo = 'Nb';
         }
 
         Media.Image.postProcess({
-          fromTexture: [ cxFrom + '-texture', cyFrom + '-texture' ],
+          aspectRatio: 1,
+          fromTexture: [ cxFrom + '-texture', cyFrom + '-texture', 'field-x', 'field-y' ],
           toFrameBuffer: cxTo,
           program: 'coord-integration',
           uniforms: uniforms({ cxFlag: 1 })
         }).postProcess({
-          fromTexture: [ cxFrom + '-texture', cyFrom + '-texture' ],
+          aspectRatio: 1,
+          fromTexture: [ cxFrom + '-texture', cyFrom + '-texture', 'field-x', 'field-y' ],
           toFrameBuffer: cyTo,
           program: 'coord-integration',
           uniforms: uniforms({ cxFlag: 0 })
         }).postProcess({
-          fromTexture: [ cxTo + '-texture', cyTo + '-texture', noiseFrom + '-texture', blendFrom + '-texture', 'white-noise', 'prob-noise' ],
+          aspectRatio: 1,
+          fromTexture: [ cxTo + '-texture', cyTo + '-texture', texFrom + '-texture', blendFrom + '-texture', 'background', 'field-x', 'field-y' ],
           toFrameBuffer: blendTo,
           program: 'Na',
           toScreen: true,
           uniforms: uniforms()
         }).postProcess({
-          fromTexture: [ cxTo + '-texture', cyTo + '-texture', noiseFrom + '-texture', 'white-noise', 'prob-noise' ],
-          toFrameBuffer: noiseTo,
+          aspectRatio: 1,
+          fromTexture: [ cxTo + '-texture', cyTo + '-texture', texFrom + '-texture', 'background' ],
+          toFrameBuffer: texTo,
           program: 'Np',
-          uniforms: uniforms()
+          uniforms: uniforms({
+            enable: Math.sin(Date.now() / 500)
+          })
+          //re-initialization
         }).postProcess({
+          aspectRatio: 1,
           fromTexture: [ cxTo + '-texture' ],
           toFrameBuffer: cxFrom,
           program: 'coord-reinit',
           uniforms: uniforms({ cxFlag: 1 })
         }).postProcess({
+          aspectRatio: 1,
           fromTexture: [ cyTo + '-texture' ],
           toFrameBuffer: cyFrom,
           program: 'coord-reinit',
@@ -318,4 +418,43 @@ function init() {
   });
 }
 
-window.addEventListener('DOMContentLoaded', init);
+
+//function load() {
+  //new IO.XHR.Group({
+    //urls: ['data/u.txt', 'data/v.txt'],
+    ////noCache: true,
+    ////responseType: 'arraybuffer',
+    //onError: function() {
+      //console.log('error', arguments);
+    //},
+    //onComplete: function(map) {
+      //var u = JSON.parse(map[0]),
+          //v = JSON.parse(map[1]),
+          //mapWidth = 400,
+          //mapHeight = 120;
+
+      //field = function(x, y) {
+        //x = (x * mapWidth / width) >> 0;
+        //x = (x + 120) % mapWidth;
+        //y = mapHeight - ((y * mapHeight / height) >> 0);
+        //var idx = x + y * mapWidth;
+        //var uval = u[idx] * maxDim,
+            //vval = v[idx] * maxDim;
+        //return [uval, vval];
+      //};
+
+      //init();
+    //}
+  //}).send();
+//}
+//
+
+function load() {
+  var img;
+  createImageTextureArray('img/bck2.jpg', function(imgData) {
+    img = imgData;
+    init(img);
+  });
+}
+
+window.addEventListener('DOMContentLoaded', load);

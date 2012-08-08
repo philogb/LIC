@@ -6,8 +6,8 @@ varying vec2 vTexCoord1;
 
 uniform sampler2D sampler1;
 uniform sampler2D sampler2;
+
 uniform sampler2D sampler3;
-uniform sampler2D sampler4;
 
 uniform float width;
 uniform float height;
@@ -17,6 +17,7 @@ uniform float vmax;
 uniform float lmax;
 uniform float cxFlag;
 uniform float maxDim;
+uniform float sgn;
 
 // Packing a [0-1] float value into a 4D vector where each component will be a 8-bits integer
 vec4 packFloatToVec4i(const float value) {
@@ -37,40 +38,20 @@ float unpackFloatFromVec4i(const vec4 value){
 void main(void) {
   float rwv = (vWidth - 1.) / width;
   float rhv = (vHeight - 1.) / height;
-  float h = lmax / vmax;
 
   vec4 cxPacked = texture2D(sampler1, vTexCoord1);
-  float cx = unpackFloatFromVec4i(cxPacked) * maxDim;
-
   vec4 cyPacked = texture2D(sampler2, vTexCoord1);
+  float cx = unpackFloatFromVec4i(cxPacked) * maxDim;
   float cy = unpackFloatFromVec4i(cyPacked) * maxDim;
 
-  float vx0 = (unpackFloatFromVec4i(texture2D(sampler3, vTexCoord1)) - .5) * maxDim * 2.;
-  float vy0 = (unpackFloatFromVec4i(texture2D(sampler4, vTexCoord1)) - .5) * maxDim * 2.;
-
-  float cxx = (cx + h / 2. * vx0) / width;
-  float cyy = (cy + h / 2. * vy0) / height;
-
-  float vx1 = (unpackFloatFromVec4i(texture2D(sampler3, vec2(cxx, cyy))) - .5) * maxDim * 2.;
-  float vy1 = (unpackFloatFromVec4i(texture2D(sampler4, vec2(cxx, cyy))) - .5) * maxDim * 2.;
-
   float val;
+  vec2 coord = vec2( rwv * cx, rhv * cy );
+  vec4 vPacked = texture2D(sampler3, coord);
+  float v = (unpackFloatFromVec4i(vPacked) - .5) * maxDim;
   if (cxFlag == 1.0) {
-    val = cx + h * vx1;
-    //4.4 Noise Advection
-    if (val < 0. || val > width) {
-      val = cx;
-      gl_FragColor = vec4(1., 0, 0, 0);
-      return;
-    }
+    val = mod(cx + sgn * v + width, width);
   } else {
-    val = cy + h * vy1;
-    //4.4 Noise Advection
-    if (val < 0. || val > height) {
-      val = cy;
-      gl_FragColor = vec4(1., 0, 0, 0);
-      return;
-    }
+    val = mod(cy + sgn * v + height, height);
   }
   gl_FragColor = packFloatToVec4i(val / maxDim);
 }

@@ -10,6 +10,7 @@ uniform sampler2D sampler3;
 uniform sampler2D sampler4;
 uniform sampler2D sampler5;
 uniform sampler2D sampler6;
+uniform sampler2D sampler7;
 
 uniform float width;
 uniform float height;
@@ -49,25 +50,32 @@ void main(void) {
   float cpx = cx / width;
   float cpy = cy / height;
   vec2 pixel = vec2(cpx, cpy);
+
+  float vx = (unpackFloatFromVec4i(texture2D(sampler6, vTexCoord1)) - .5) * maxDim * 2.;
+  float vy = (unpackFloatFromVec4i(texture2D(sampler7, vTexCoord1)) - .5) * maxDim * 2.;
+  vec2 field = vec2(vx, vy);
+
   vec4 texel;
 
   //4.5 Edge Treatment
   if (cxPacked.r == 1. && cxPacked.g == 0.
    || cyPacked.r == 1. && cyPacked.g == 0.) {
-    //out of bounds. inject random white noise.
-    texel = texture2D(sampler5, pixel);
+    //out of bounds. inject transparency.
+    texel = vec4(0);
   } else {
     texel = texture2D(sampler3, pixel);
   }
 
-  //4.7 Noise Injection
-  if (texture2D(sampler6, pixel).r > 0.5) {
-    texel = vec4(vec3(1. - texel.rgb), 1);
-  }
+  //4.10.2 Velocity Mask
+  /*const float m = 1.;*/
+  /*const float n = 1.;*/
+  /*float ratio = min(length(field) / vmax, 1.);*/
+  /*vec4 alpha = (1. - pow(1. - ratio, m)) * (1. - pow(1. - texel, vec4(n)));*/
+  /*texel = alpha;*/
 
   //4.9 Noise Blending
   vec4 blendValue = texture2D(sampler4, vTexCoord1);
-
-  gl_FragColor = mix(texel, blendValue, 0.97);
+  /*gl_FragColor = 0.2 * texel + 0.96 * blendValue;*/
+  gl_FragColor = mix(texel, blendValue, 0.95);
 }
 
