@@ -17,6 +17,7 @@ uniform float vmax;
 uniform float lmax;
 uniform float maxDim;
 uniform float enable;
+uniform float sharpness;
 
 // Packing a [0-1] float value into a 4D vector where each component will be a 8-bits integer
 vec4 packFloatToVec4i(const float value) {
@@ -37,15 +38,16 @@ void main(void) {
   float x = gl_FragCoord.x;
   float y = gl_FragCoord.y;
   float b = lmax;
+  float rw = (width - 1.) / width;
+  float rh = (height - 1.) / height;
 
-  vec2 coord = gl_FragCoord.xy / vec2(width, height);
-  vec4 cxPacked = texture2D(sampler1, coord);
+  vec4 cxPacked = texture2D(sampler1, vTexCoord1);
   float cx = unpackFloatFromVec4i(cxPacked) * maxDim;
-  vec4 cyPacked = texture2D(sampler2, coord);
+  vec4 cyPacked = texture2D(sampler2, vTexCoord1);
   float cy = unpackFloatFromVec4i(cyPacked) * maxDim;
 
-  float cpx = floor(cx) / width;
-  float cpy = floor(cy) / height;
+  float cpx = cx / width;// * rw;
+  float cpy = cy / height;// * rh;
   vec4 texel;
   vec2 pixel = vec2(cpx, cpy);
 
@@ -58,11 +60,15 @@ void main(void) {
     texel = texture2D(sampler3, pixel);
   }
 
+  //5.3 diffusion correction
+  texel = (texel - .5) / (sharpness * (2. * abs(texel - .5) -1.) + 1.) + .5;
+
   vec4 background = texture2D(sampler4, vTexCoord1);
 
-  if (enable > -0.99) {
-    background = vec4(0);
-  }
+  /*if (enable > -0.99) {*/
+    /*background = vec4(0);*/
+  /*}*/
 
   gl_FragColor = max(texel, background);
+  gl_FragColor = texel;
 }

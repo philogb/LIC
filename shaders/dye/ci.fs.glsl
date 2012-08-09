@@ -45,6 +45,7 @@ void main(void) {
   vec4 cyPacked = texture2D(sampler2, vTexCoord1);
   float cy = unpackFloatFromVec4i(cyPacked) * maxDim;
 
+  //5.2 Dye Advection RK2
   float vx0 = (unpackFloatFromVec4i(texture2D(sampler3, vTexCoord1)) - .5) * maxDim * 2.;
   float vy0 = (unpackFloatFromVec4i(texture2D(sampler4, vTexCoord1)) - .5) * maxDim * 2.;
 
@@ -57,19 +58,19 @@ void main(void) {
   float val;
   if (cxFlag == 1.0) {
     val = cx + h * vx1;
+    gl_FragColor = cxPacked;
+    return;
     //4.4 Noise Advection
     if (val < 0. || val > width) {
       val = cx;
-      gl_FragColor = vec4(1., 0, 0, 0);
-      return;
     }
   } else {
     val = cy + h * vy1;
+    gl_FragColor = cyPacked;
+    return;
     //4.4 Noise Advection
     if (val < 0. || val > height) {
       val = cy;
-      gl_FragColor = vec4(1., 0, 0, 0);
-      return;
     }
   }
   gl_FragColor = packFloatToVec4i(val / maxDim);

@@ -42,7 +42,8 @@ void main(void) {
 
   vec4 cPacked = texture2D(sampler1, coord);
   float c = unpackFloatFromVec4i(cPacked) * maxDim;
-  float ci = fract(c) + idx;
+  /*gl_FragColor = vec4(c / width);*/
+  float ci = /*fract(c) + */idx;
   gl_FragColor = packFloatToVec4i(ci / maxDim);
 }
 

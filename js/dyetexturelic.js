@@ -1,18 +1,21 @@
 PhiloGL.unpack();
 
 var alic = false,
+    sharpness = 0,
     width = 512, //canvas width
     height = 512, //canvas height
     vWidth = width, //domain width for the vector field
     vHeight = height, //domain height for the vector field
-    lmax = 20, //maximum displacement distance (in pixels)
-    vmax = 363, //maximum vector field value
+    lmax = 5, //maximum displacement distance (in pixels)
+    vmax = 5, //maximum vector field value
     maxDim = Math.max(width, height) + 1,
     ctx =  document.createElement('canvas').getContext('2d'),
     field = function(x, y) {
       x -= width / 2;
       y -= height / 2;
-      return [-y, x];
+      var norm = Math.sqrt(x * x + y * y);
+      return [0, 0];
+      return [-y / norm * 10, x / norm * 10];
     };
 
 //lmax = 25;
@@ -135,8 +138,8 @@ function createCoordinatesTextureArray(index) {
 
 function init(img) {
   var rnd = Math.random;
-  var cx = createCoordinatesTextureArray(function(i) { return (i % width) + rnd(); });
-  var cy = createCoordinatesTextureArray(function(i) { return Math.floor(i / width) + rnd(); });
+  var cx = createCoordinatesTextureArray(function(i) { return (i % width)/* + rnd()*/; });
+  var cy = createCoordinatesTextureArray(function(i) { return Math.floor(i / width)/* + rnd()*/; });
   var v = createFieldTextureArray(field);
 
 
@@ -384,14 +387,15 @@ function init(img) {
           toFrameBuffer: blendTo,
           program: 'Na',
           toScreen: true,
-          uniforms: uniforms()
+          uniforms: uniforms({ sharpness: sharpness })
         }).postProcess({
           aspectRatio: 1,
           fromTexture: [ cxTo + '-texture', cyTo + '-texture', texFrom + '-texture', 'background' ],
           toFrameBuffer: texTo,
           program: 'Np',
           uniforms: uniforms({
-            enable: Math.sin(Date.now() / 500)
+            enable: Math.sin(Date.now() / 500),
+            sharpness: sharpness
           })
           //re-initialization
         }).postProcess({
@@ -411,6 +415,8 @@ function init(img) {
 
       Fx.requestAnimationFrame(function loop() {
         draw(noiseTex);
+        //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        //draw(!noiseTex);
         noiseTex = !noiseTex;
         Fx.requestAnimationFrame(loop);
       });
@@ -419,39 +425,40 @@ function init(img) {
 }
 
 
-//function load() {
-  //new IO.XHR.Group({
-    //urls: ['data/u.txt', 'data/v.txt'],
-    ////noCache: true,
-    ////responseType: 'arraybuffer',
-    //onError: function() {
-      //console.log('error', arguments);
-    //},
-    //onComplete: function(map) {
-      //var u = JSON.parse(map[0]),
-          //v = JSON.parse(map[1]),
-          //mapWidth = 400,
-          //mapHeight = 120;
+function map(img) {
+  new IO.XHR.Group({
+    urls: ['data/u.txt', 'data/v.txt'],
+    //noCache: true,
+    //responseType: 'arraybuffer',
+    onError: function() {
+      console.log('error', arguments);
+    },
+    onComplete: function(map) {
+      var u = JSON.parse(map[0]),
+          v = JSON.parse(map[1]),
+          mapWidth = 400,
+          mapHeight = 120;
 
-      //field = function(x, y) {
-        //x = (x * mapWidth / width) >> 0;
-        //x = (x + 120) % mapWidth;
-        //y = mapHeight - ((y * mapHeight / height) >> 0);
-        //var idx = x + y * mapWidth;
-        //var uval = u[idx] * maxDim,
-            //vval = v[idx] * maxDim;
-        //return [uval, vval];
-      //};
+      lmax = 3; //maximum displacement distance (in pixels)
+      vmax = 10; //maximum vector field value
+      field = function(x, y) {
+        x = (x * mapWidth / width) >> 0;
+        x = (x + 120) % mapWidth;
+        y = mapHeight - ((y * mapHeight / height) >> 0);
+        var idx = x + y * mapWidth;
+        var uval = u[idx] * maxDim,
+            vval = v[idx] * maxDim;
+        return [uval, vval];
+      };
 
-      //init();
-    //}
-  //}).send();
-//}
-//
+      init(img);
+    }
+  }).send();
+}
 
 function load() {
   var img;
-  createImageTextureArray('img/bck2.jpg', function(imgData) {
+  createImageTextureArray('img/flowers.jpg', function(imgData) {
     img = imgData;
     init(img);
   });
