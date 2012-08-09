@@ -13,6 +13,7 @@ uniform float vmax;
 uniform float lmax;
 uniform float cxFlag;
 uniform float maxDim;
+uniform float time;
 
 // Packing a [0-1] float value into a 4D vector where each component will be a 8-bits integer
 vec4 packFloatToVec4i(const float value) {
@@ -40,10 +41,8 @@ void main(void) {
     idx = gl_FragCoord.y;
   }
 
-  vec4 cPacked = texture2D(sampler1, coord);
-  float c = unpackFloatFromVec4i(cPacked) * maxDim;
-  /*gl_FragColor = vec4(c / width);*/
-  float ci = /*fract(c) + */idx;
-  gl_FragColor = packFloatToVec4i(ci / maxDim);
+  float c = texture2D(sampler1, coord).x;
+  float ci = fract(c) + idx;
+  gl_FragColor = vec4(ci);
 }
 

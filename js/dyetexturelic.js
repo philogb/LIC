@@ -1,100 +1,37 @@
 PhiloGL.unpack();
 
-var alic = false,
-    sharpness = 0,
+var sharpness = 0,
     width = 512, //canvas width
     height = 512, //canvas height
     vWidth = width, //domain width for the vector field
     vHeight = height, //domain height for the vector field
-    lmax = 5, //maximum displacement distance (in pixels)
-    vmax = 5, //maximum vector field value
-    maxDim = Math.max(width, height) + 1,
+    lmax = 10, //maximum displacement distance (in pixels)
+    vmax = 50, //maximum vector field value
     ctx =  document.createElement('canvas').getContext('2d'),
     field = function(x, y) {
       x -= width / 2;
       y -= height / 2;
       var norm = Math.sqrt(x * x + y * y);
-      return [0, 0];
-      return [-y / norm * 10, x / norm * 10];
+      return [y / norm * 10, x / norm * 10];
     };
 
-//lmax = 25;
-//vmax = 200;
-//field = function(x, y) {
-  //x -= width / 2;
-  //y -= height / 2;
-  //x /= 50;
-  //y /= 50;
-  //var charge = 10000,
-      //rq = 10,
-      //v1 = [ rq - x, -y],
-      //v2 = [-rq - x, -y],
-      //d1 = Math.sqrt(v1[0] * v1[0] + v1[1] * v1[1]),
-      //d2 = Math.sqrt(v2[0] * v2[0] + v2[1] * v2[1]);
-
-  //if (d1 < 3 || d2 < 3) {
-    //return [0, 0];
-  //}
-
-  //v1[0] = charge / (d1 * d1 * d1) * v1[0];
-  //v1[1] = charge / (d1 * d1 * d1) * v1[1];
-
-  //v2[0] = charge / (d2 * d2 * d2) * v2[0];
-  //v2[1] = charge / (d2 * d2 * d2) * v2[1];
-
-  //return [v1[0] - v2[0], v1[1] - v2[1]];
-//};
-
-function fract(x) {
-  return x - Math.floor(x);
-}
-
-function packFloatToRGBA(val) {
-  var bitSh = [256.0 * 256.0 * 256.0, 256.0 * 256.0, 256.0, 1.0];
-  var bitMsk = [0.0, 1.0 / 256.0, 1.0 / 256.0, 1.0 / 256.0];
-  for (var i = 0; i < 4; ++i) {
-    bitSh[i] = fract(bitSh[i] * val);
-  }
-  return [bitSh[0],
-          bitSh[1] - bitSh[0] * bitMsk[1],
-          bitSh[2] - bitSh[1] * bitMsk[2],
-          bitSh[3] - bitSh[2] * bitMsk[3]];
-}
-
-function unpackFloatFromVec4i(value){
-   var bitSh = [1.0 / (256.0 * 256.0 * 256.0), 1.0 / (256.0 * 256.0), 1.0 / 256.0, 1.0];
-   return bitSh[0] * value[0] + bitSh[1] * value[1] + bitSh[2] * value[2] + bitSh[3] * value[3];
-}
-
-
 function createFieldTextureArray(field) {
-  var vxImageData = ctx.createImageData(width, height),
-      vyImageData = ctx.createImageData(width, height),
-      vx = vxImageData.data,
-      vy = vyImageData.data,
+  var vx = new Float32Array(width * height * 4),
+      vy = new Float32Array(width * height * 4),
       v, pvx, pvy, idx;
 
   for (var x = 0; x < width; ++x) {
     for (var y = 0; y < height; ++y) {
       idx = (x + y * width) * 4;
       v = field(x, height - y);
-      pvx = v[0] / (2 * maxDim) + 0.5;
-      pvy = v[1] / (2 * maxDim) + 0.5;
-      pvx = packFloatToRGBA(pvx);
-      pvy = packFloatToRGBA(pvy);
-      vx[idx    ] = (pvx[0] * 255) >> 0;
-      vx[idx + 1] = (pvx[1] * 255) >> 0;
-      vx[idx + 2] = (pvx[2] * 255) >> 0;
-      vx[idx + 3] = (pvx[3] * 255) >> 0;
-
-      vy[idx    ] = (pvy[0] * 255) >> 0;
-      vy[idx + 1] = (pvy[1] * 255) >> 0;
-      vy[idx + 2] = (pvy[2] * 255) >> 0;
-      vy[idx + 3] = (pvy[3] * 255) >> 0;
+      pvx = v[0];
+      pvy = v[1];
+      vx[idx] = pvx;
+      vy[idx] = pvy;
     }
   }
 
-  return [vxImageData, vyImageData];
+  return [vx, vy];
 }
 
 function createImageTextureArray(filename, callback) {
@@ -113,33 +50,22 @@ function createImageTextureArray(filename, callback) {
 }
 
 function createCoordinatesTextureArray(index) {
-  var imageData = ctx.createImageData(width, height),
-      ans = imageData.data,
-      rand = Math.random;
+  var ans = new Float32Array(width * height * 4);
 
   for (var i = 0, l = width * height; i < l; ++i) {
     var idx = i * 4,
-        value = index(i),
-        val = packFloatToRGBA(value / maxDim);
+        value = index(i);
 
-    val[0] = (val[0] * 255) >> 0;
-    val[1] = (val[1] * 255) >> 0;
-    val[2] = (val[2] * 255) >> 0;
-    val[3] = (val[3] * 255) >> 0;
-
-    ans[idx    ] = val[0];
-    ans[idx + 1] = val[1];
-    ans[idx + 2] = val[2];
-    ans[idx + 3] = val[3];
+    ans[idx] = value;
   }
 
-  return imageData;
+  return ans;
 }
 
-function init(img) {
+function init(opt) {
   var rnd = Math.random;
-  var cx = createCoordinatesTextureArray(function(i) { return (i % width)/* + rnd()*/; });
-  var cy = createCoordinatesTextureArray(function(i) { return Math.floor(i / width)/* + rnd()*/; });
+  var cx = createCoordinatesTextureArray(function(i) { return (i % width) + rnd(); });
+  var cy = createCoordinatesTextureArray(function(i) { return Math.floor(i / width) + rnd(); });
   var v = createFieldTextureArray(field);
 
 
@@ -176,65 +102,49 @@ function init(img) {
       fs: 'na.fs.glsl',
       from: 'uris',
       noCache: true
-    }, {
-      path: 'shaders/dye/',
-      id: 'alic-init',
-      vs: 'postprocess.vs.glsl',
-      fs: 'alic-init.fs.glsl',
-      from: 'uris',
-      noCache: true
-    }, {
-      path: 'shaders/dye/',
-      id: 'alic-int',
-      vs: 'postprocess.vs.glsl',
-      fs: 'alic-int.fs.glsl',
-      from: 'uris',
-      noCache: true
-    }, {
-      path: 'shaders/dye/',
-      id: 'alic-accum',
-      vs: 'postprocess.vs.glsl',
-      fs: 'alic-accum.fs.glsl',
-      from: 'uris',
-      noCache: true
-    }, {
-      path: 'shaders/dye/',
-      id: 'alic-copy',
-      vs: 'postprocess.vs.glsl',
-      fs: 'alic-copy.fs.glsl',
-      from: 'uris',
-      noCache: true
     }],
     onError: function(e) {
       throw e;
-      console.log(e);
     },
     onLoad: function(app) {
       var gl = app.gl,
           program = app.program,
           canvas = app.canvas;
-
-      app.setTexture('field-x', {
-        width: width,
-        height: height,
+       app.setTexture('field-x', {
+        pixelStore: [{
+          name: gl.UNPACK_FLIP_Y_WEBGL,
+          value: false
+        }],
         data: {
+          type: gl.FLOAT,
+          width: width,
+          height: height,
           value: v[0]
         }
       });
 
       app.setTexture('field-y', {
-        width: width,
-        height: height,
+        pixelStore: [{
+          name: gl.UNPACK_FLIP_Y_WEBGL,
+          value: false
+        }],
         data: {
+          type: gl.FLOAT,
+          width: width,
+          height: height,
           value: v[1]
         }
       });
 
       app.setTexture('background', {
+        pixelStore: [{
+          name: gl.UNPACK_FLIP_Y_WEBGL,
+          value: false
+        }],
         width: width,
         height: height,
         data: {
-          value: img
+          value: opt.background
         }
       });
 
@@ -243,7 +153,7 @@ function init(img) {
         height: height,
         bindToTexture: {
           data: {
-            value: img
+            value: opt.background
           }
         }
       });
@@ -253,6 +163,9 @@ function init(img) {
         height: height,
         bindToTexture: {
           data: {
+            type: gl.FLOAT,
+            width: width,
+            height: height,
             value: cx
           }
         }
@@ -263,6 +176,9 @@ function init(img) {
         height: height,
         bindToTexture: {
           data: {
+            type: gl.FLOAT,
+            width: width,
+            height: height,
             value: cy
           }
         }
@@ -271,13 +187,25 @@ function init(img) {
       app.setFrameBuffer('cxp', {
         width: width,
         height: height,
-        bindToTexture: {}
+        bindToTexture: {
+          data: {
+            width: width,
+            height: height,
+            type: gl.FLOAT
+          }
+        }
       });
 
       app.setFrameBuffer('cyp', {
         width: width,
         height: height,
-        bindToTexture: {}
+        bindToTexture: {
+          data: {
+            width: width,
+            height: height,
+            type: gl.FLOAT
+          }
+        }
       });
 
       app.setFrameBuffer('Np', {
@@ -314,20 +242,6 @@ function init(img) {
         }
       });
 
-      app.setFrameBuffer('Nlic', {
-        width: width,
-        height: height,
-        bindToTexture: {
-          parameters: [{
-            name: gl.TEXTURE_MAG_FILTER,
-            value: gl.LINEAR
-          }, {
-            name: gl.TEXTURE_MIN_FILTER,
-            value: gl.LINEAR
-          }]
-        }
-      });
-
       function uniforms(opt) {
         opt = opt || {};
         var ans = {
@@ -336,8 +250,7 @@ function init(img) {
           vWidth: vWidth,
           vHeight: vHeight,
           lmax: lmax,
-          vmax: vmax,
-          maxDim: maxDim
+          vmax: vmax
         };
         for (var k in opt) {
           ans[k] = opt[k];
@@ -348,7 +261,6 @@ function init(img) {
       var noiseTex = true;
       function draw(noiseTex) {
         var cxFrom, cxTo, cyFrom, cyTo, noiseFrom, noiseTo, blendFrom, blendTo;
-
         if (noiseTex) {
           cxFrom = 'cx',
           cxTo = 'cxp',
@@ -403,21 +315,36 @@ function init(img) {
           fromTexture: [ cxTo + '-texture' ],
           toFrameBuffer: cxFrom,
           program: 'coord-reinit',
-          uniforms: uniforms({ cxFlag: 1 })
+          uniforms: uniforms({ cxFlag: 1, time: Date.now() })
         }).postProcess({
           aspectRatio: 1,
           fromTexture: [ cyTo + '-texture' ],
           toFrameBuffer: cyFrom,
           program: 'coord-reinit',
-          uniforms: uniforms({ cxFlag: 0 })
+          uniforms: uniforms({ cxFlag: 0, time: Date.now() })
         });
       }
 
       Fx.requestAnimationFrame(function loop() {
         draw(noiseTex);
-        //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        //draw(!noiseTex);
         noiseTex = !noiseTex;
+        //draw(noiseTex);
+        //noiseTex = !noiseTex;
+        //draw(noiseTex);
+        //noiseTex = !noiseTex;
+        //draw(noiseTex);
+        //noiseTex = !noiseTex;
+        //draw(noiseTex);
+        //noiseTex = !noiseTex;
+        //draw(noiseTex);
+        //noiseTex = !noiseTex;
+        //draw(noiseTex);
+        //noiseTex = !noiseTex;
+        //draw(noiseTex);
+        //noiseTex = !noiseTex;
+        //draw(noiseTex);
+        //noiseTex = !noiseTex;
+        //draw(noiseTex);
         Fx.requestAnimationFrame(loop);
       });
     }
@@ -446,8 +373,8 @@ function map(img) {
         x = (x + 120) % mapWidth;
         y = mapHeight - ((y * mapHeight / height) >> 0);
         var idx = x + y * mapWidth;
-        var uval = u[idx] * maxDim,
-            vval = v[idx] * maxDim;
+        var uval = u[idx],
+            vval = v[idx];
         return [uval, vval];
       };
 
@@ -458,9 +385,31 @@ function map(img) {
 
 function load() {
   var img;
-  createImageTextureArray('img/flowers.jpg', function(imgData) {
-    img = imgData;
-    init(img);
+  createImageTextureArray('img/flowers.jpg', function(background) {
+    createImageTextureArray('img/v.jpg', function(v) {
+        //v = v.data;
+        //function sq(v) {
+           //for (var i = 0, l = v.length; i < l; ++i) {
+              //v[i] *= v[i];
+           //}
+           //return v;
+        //};
+        //lmax = 20;
+        //vmax = 100;
+        //field = function(x, y) {
+          //var idx = (x + y * width) * 4,
+              //norm = v[idx] / 255 * vmax,
+              //angle = v[idx + 1] / 255 * Math.PI * 2;
+
+          ////return [5, 0];
+          ////return [2, 0];
+          //return [Math.cos(angle) * norm, Math.sin(angle) * norm];
+
+        //};
+        init({
+          background: background
+        });
+    });
   });
 }
 

@@ -602,6 +602,7 @@ $.splat = (function() {
 
       var textureType = ('textureType' in opt)? opt.textureType = gl.get(opt.textureType) : gl.TEXTURE_2D,
           textureTarget = ('textureTarget' in opt)? opt.textureTarget = gl.get(opt.textureTarget) : textureType,
+          isFloat = (opt.data && opt.data.type === gl.FLOAT),
           isCube = textureType == gl.TEXTURE_CUBE_MAP,
           hasTexture = name in this.textures,
           texture = hasTexture? this.textures[name] : gl.createTexture(),
@@ -634,7 +635,11 @@ $.splat = (function() {
             gl.texImage2D(textureTarget[i], 0, format, format, type, value[i]);
           }
         } else {
-          gl.texImage2D(textureTarget, 0, format, format, type, value);
+          if (isFloat) {
+            gl.texImage2D(textureTarget, 0, format, data.width, data.height, data.border, format, type, value);
+          } else {
+            gl.texImage2D(textureTarget, 0, format, format, type, value);
+          }
         }
       //we're setting a texture to a framebuffer
       } else if (data.width || data.height) {

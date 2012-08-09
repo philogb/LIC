@@ -41,10 +41,8 @@ void main(void) {
   float rw = (width - 1.) / width;
   float rh = (height - 1.) / height;
 
-  vec4 cxPacked = texture2D(sampler1, vTexCoord1);
-  float cx = unpackFloatFromVec4i(cxPacked) * maxDim;
-  vec4 cyPacked = texture2D(sampler2, vTexCoord1);
-  float cy = unpackFloatFromVec4i(cyPacked) * maxDim;
+  float cx = texture2D(sampler1, vTexCoord1).x;
+  float cy = texture2D(sampler2, vTexCoord1).x;
 
   float cpx = cx / width;// * rw;
   float cpy = cy / height;// * rh;
@@ -52,9 +50,9 @@ void main(void) {
   vec2 pixel = vec2(cpx, cpy);
 
   //4.5 Edge Treatment
-  if (cxPacked.r == 1. && cxPacked.g == 0.
-   || cyPacked.r == 1. && cyPacked.g == 0.) {
-    //out of bounds. inject transparent.
+  if (cx > width || cx < 0.
+   || cy > height || cy < 0.) {
+    /*//out of bounds. inject transparent.*/
     texel = vec4(0);
   } else {
     texel = texture2D(sampler3, pixel);
@@ -69,6 +67,6 @@ void main(void) {
     /*background = vec4(0);*/
   /*}*/
 
-  gl_FragColor = max(texel, background);
+  /*gl_FragColor = mix(texel, background, 0.5);*/
   gl_FragColor = texel;
 }
