@@ -48,10 +48,6 @@ void main(void) {
 
   vec4 background = texture2D(sampler4, vTexCoord1);
 
-  /*if (enable > -0.99) {*/
-    /*background = vec4(0);*/
-  /*}*/
-
   /*gl_FragColor = mix(texel, background, 0.5);*/
   gl_FragColor = texel;
 }

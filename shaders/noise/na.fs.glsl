@@ -41,26 +41,25 @@ void main(void) {
   float y = gl_FragCoord.y;
   float b = lmax;
 
-  vec2 coord = gl_FragCoord.xy / vec2(width, height);
-  vec4 cxPacked = texture2D(sampler1, coord);
-  float cx = unpackFloatFromVec4i(cxPacked) * maxDim;
-  vec4 cyPacked = texture2D(sampler2, coord);
-  float cy = unpackFloatFromVec4i(cyPacked) * maxDim;
+  float rw = (width - 1.) / width;
+  float rh = (height - 1.) / height;
 
+  vec2 coord = vTexCoord1;
+  float cx = texture2D(sampler1, coord).x;
+  float cy = texture2D(sampler2, coord).x;
 
-  float cpx = cx / width;
-  float cpy = cy / height;
+  float cpx = cx / width * rw;
+  float cpy = cy / height * rh;
   vec2 pixel = vec2(cpx, cpy);
 
-  float vx = (unpackFloatFromVec4i(texture2D(sampler7, vTexCoord1)) - .5) * maxDim * 2.;
-  float vy = (unpackFloatFromVec4i(texture2D(sampler8, vTexCoord1)) - .5) * maxDim * 2.;
+  float vx = texture2D(sampler7, pixel).x;
+  float vy = texture2D(sampler8, pixel).x;
   vec2 field = vec2(vx, vy);
 
   vec4 texel;
-
   //4.5 Edge Treatment
-  if (cxPacked.r == 1. && cxPacked.g == 0.
-   || cyPacked.r == 1. && cyPacked.g == 0.) {
+  if (cx > width || cx < 0.
+   || cy > height || cy < 0.) {
     //out of bounds. inject random white noise.
     texel = texture2D(sampler5, pixel);
   } else {
@@ -73,7 +72,7 @@ void main(void) {
   }
 
   //4.10.2 Velocity Mask
-  const float m = 1.;
+  const float m = 5.;
   const float n = 1.;
   float ratio = min(length(field) / vmax, 1.);
   vec4 alpha = (1. - pow(1. - ratio, m)) * (1. - pow(1. - texel, vec4(n)));
