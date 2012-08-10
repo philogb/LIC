@@ -17,8 +17,7 @@ var sharpness = 0,
     };
 
 function createFieldTextureArray(field) {
-  var vx = new Float32Array(width * height * 4),
-      vy = new Float32Array(width * height * 4),
+  var vf = new Float32Array(width * height * 4),
       v, pvx, pvy, idx;
 
   for (var x = 0; x < width; ++x) {
@@ -27,12 +26,12 @@ function createFieldTextureArray(field) {
       v = field(x, (height -1) - y);
       pvx = v[0];
       pvy = v[1];
-      vx[idx] = pvx;
-      vy[idx] = pvy;
+      vf[idx] = pvx;
+      vf[idx + 1] = pvy;
     }
   }
 
-  return [vx, vy];
+  return vf;
 }
 
 function createImageTextureArray(filename, callback) {
@@ -50,25 +49,9 @@ function createImageTextureArray(filename, callback) {
   };
 }
 
-function createCoordinatesTextureArray(index) {
-  var ans = new Float32Array(width * height * 4);
-
-  for (var i = 0, l = width * height; i < l; ++i) {
-    var idx = i * 4,
-        value = index(i);
-
-    ans[idx] = value;
-  }
-
-  return ans;
-}
-
 function init(opt) {
   var rnd = Math.random;
-  var cx = createCoordinatesTextureArray(function(i) { return (i % width) + rnd(); });
-  var cy = createCoordinatesTextureArray(function(i) { return Math.floor(i / width) + rnd(); });
   var v = createFieldTextureArray(field);
-
 
   var canvas = document.getElementById('canvas');
   canvas.width = width;
@@ -111,7 +94,7 @@ function init(opt) {
       var gl = app.gl,
           program = app.program,
           canvas = app.canvas;
-       app.setTexture('field-x', {
+       app.setTexture('field', {
         pixelStore: [{
           name: gl.UNPACK_FLIP_Y_WEBGL,
           value: false
@@ -120,20 +103,7 @@ function init(opt) {
           type: gl.FLOAT,
           width: width,
           height: height,
-          value: v[0]
-        }
-      });
-
-      app.setTexture('field-y', {
-        pixelStore: [{
-          name: gl.UNPACK_FLIP_Y_WEBGL,
-          value: false
-        }],
-        data: {
-          type: gl.FLOAT,
-          width: width,
-          height: height,
-          value: v[1]
+          value: v
         }
       });
 
@@ -159,7 +129,7 @@ function init(opt) {
         }
       });
 
-      app.setFrameBuffer('cx', {
+      app.setFrameBuffer('c', {
         width: width,
         height: height,
         bindToTexture: {
@@ -172,32 +142,7 @@ function init(opt) {
         }
       });
 
-      app.setFrameBuffer('cy', {
-        width: width,
-        height: height,
-        bindToTexture: {
-          data: {
-            type: gl.FLOAT,
-            width: width,
-            height: height
-            //value: cy
-          }
-        }
-      });
-
-      app.setFrameBuffer('cxp', {
-        width: width,
-        height: height,
-        bindToTexture: {
-          data: {
-            width: width,
-            height: height,
-            type: gl.FLOAT
-          }
-        }
-      });
-
-      app.setFrameBuffer('cyp', {
+      app.setFrameBuffer('cp', {
         width: width,
         height: height,
         bindToTexture: {
@@ -261,32 +206,24 @@ function init(opt) {
 
       //initialize cx cy
       Media.Image.postProcess({
-        toFrameBuffer: 'cx',
+        toFrameBuffer: 'c',
         program: 'coord-reinit',
-        uniforms: uniforms({ init: 1, cxFlag: 1 })
-      }).postProcess({
-        toFrameBuffer: 'cy',
-        program: 'coord-reinit',
-        uniforms: uniforms({ init: 1, cxFlag: 0 })
+        uniforms: uniforms({ init: 1 })
       });
 
       var noiseTex = true;
       function draw(noiseTex) {
         var cxFrom, cxTo, cyFrom, cyTo, noiseFrom, noiseTo, blendFrom, blendTo;
         if (noiseTex) {
-          cxFrom = 'cx',
-          cxTo = 'cxp',
-          cyFrom = 'cy',
-          cyTo = 'cyp',
+          cFrom = 'c',
+          cTo = 'cp',
           texFrom = 'N',
           texTo = 'Np';
           blendFrom = 'Nb';
           blendTo = 'Na';
         } else {
-          cxFrom = 'cx',
-          cxTo = 'cxp',
-          cyFrom = 'cy',
-          cyTo = 'cyp',
+          cFrom = 'c',
+          cTo = 'cp',
           texFrom = 'Np',
           texTo = 'N';
           blendFrom = 'Na';
@@ -294,24 +231,19 @@ function init(opt) {
         }
 
         Media.Image.postProcess({
-          fromTexture: [ cxFrom + '-texture', cyFrom + '-texture', 'field-x', 'field-y' ],
-          toFrameBuffer: cxTo,
+          fromTexture: [ cFrom + '-texture', 'field' ],
+          toFrameBuffer: cTo,
           program: 'coord-integration',
-          uniforms: uniforms({ cxFlag: 1 })
-        }).postProcess({
-          fromTexture: [ cxFrom + '-texture', cyFrom + '-texture', 'field-x', 'field-y' ],
-          toFrameBuffer: cyTo,
-          program: 'coord-integration',
-          uniforms: uniforms({ cxFlag: 0 })
+          uniforms: uniforms()
         }).postProcess({
           aspectRatio: 1,
-          fromTexture: [ cxTo + '-texture', cyTo + '-texture', texFrom + '-texture', blendFrom + '-texture', 'background', 'field-x', 'field-y' ],
+          fromTexture: [ cTo + '-texture', texFrom + '-texture', blendFrom + '-texture', 'field' ],
           toFrameBuffer: blendTo,
           program: 'Na',
           toScreen: true,
           uniforms: uniforms({ sharpness: sharpness })
         }).postProcess({
-          fromTexture: [ cxTo + '-texture', cyTo + '-texture', texFrom + '-texture', 'background' ],
+          fromTexture: [ cTo + '-texture', texFrom + '-texture', 'background' ],
           toFrameBuffer: texTo,
           program: 'Np',
           uniforms: uniforms({
@@ -320,15 +252,10 @@ function init(opt) {
           })
           //re-initialization
         }).postProcess({
-          fromTexture: [ cxTo + '-texture' ],
-          toFrameBuffer: cxFrom,
+          fromTexture: [ cTo + '-texture' ],
+          toFrameBuffer: cFrom,
           program: 'coord-reinit',
-          uniforms: uniforms({ cxFlag: 1, init: 0 })
-        }).postProcess({
-          fromTexture: [ cyTo + '-texture' ],
-          toFrameBuffer: cyFrom,
-          program: 'coord-reinit',
-          uniforms: uniforms({ cxFlag: 0, init: 0 })
+          uniforms: uniforms({ init: 0 })
         });
       }
 

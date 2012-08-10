@@ -7,7 +7,6 @@ varying vec2 vTexCoord1;
 uniform sampler2D sampler1;
 uniform sampler2D sampler2;
 uniform sampler2D sampler3;
-uniform sampler2D sampler4;
 
 uniform float width;
 uniform float height;
@@ -26,12 +25,12 @@ void main(void) {
   float rw = (width - 1.) / width;
   float rh = (height - 1.) / height;
 
-  float cx = texture2D(sampler1, vTexCoord1).x;
-  float cy = texture2D(sampler2, vTexCoord1).x;
+  vec4 texel = texture2D(sampler1, vTexCoord1);
+  float cx = texel.x;
+  float cy = texel.y;
 
-  float cpx = cx / width;// * rw;
-  float cpy = cy / height;// * rh;
-  vec4 texel;
+  float cpx = cx / width;
+  float cpy = cy / height;
   vec2 pixel = vec2(cpx, cpy);
 
   //4.5 Edge Treatment
@@ -40,13 +39,13 @@ void main(void) {
     /*//out of bounds. inject transparent.*/
     texel = vec4(0);
   } else {
-    texel = texture2D(sampler3, pixel);
+    texel = texture2D(sampler2, pixel);
   }
 
   //5.3 diffusion correction
   texel = (texel - .5) / (sharpness * (2. * abs(texel - .5) -1.) + 1.) + .5;
 
-  vec4 background = texture2D(sampler4, vTexCoord1);
+  vec4 background = texture2D(sampler3, vTexCoord1);
 
   /*gl_FragColor = mix(texel, background, 0.5);*/
   gl_FragColor = texel;

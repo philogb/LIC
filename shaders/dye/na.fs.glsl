@@ -8,9 +8,6 @@ uniform sampler2D sampler1;
 uniform sampler2D sampler2;
 uniform sampler2D sampler3;
 uniform sampler2D sampler4;
-uniform sampler2D sampler5;
-uniform sampler2D sampler6;
-uniform sampler2D sampler7;
 
 uniform float width;
 uniform float height;
@@ -30,25 +27,26 @@ void main(void) {
   float rh = (height - 1.) / height;
 
   vec2 coord = vTexCoord1;
-  float cx = texture2D(sampler1, coord).x;
-  float cy = texture2D(sampler2, coord).x;
+  vec4 texel = texture2D(sampler1, coord);
+  float cx = texel.x;
+  float cy = texel.y;
 
   float cpx = cx / width * rw;
   float cpy = cy / height * rh;
   vec2 pixel = vec2(cpx, cpy);
 
-  float vx = texture2D(sampler6, pixel).x;
-  float vy = texture2D(sampler7, pixel).x;
+  texel = texture2D(sampler4, pixel);
+  float vx = texel.x;
+  float vy = texel.y;
   vec2 field = vec2(vx, vy);
 
-  vec4 texel;
   //4.5 Edge Treatment
   if (cx > width || cx < 0.
    || cy > height || cy < 0.) {
     //out of bounds. inject transparency.
     texel = vec4(0);
   } else {
-    texel = texture2D(sampler3, pixel);
+    texel = texture2D(sampler2, pixel);
   }
 
   //5.3 diffusion correction
@@ -62,7 +60,7 @@ void main(void) {
   /*texel = alpha;*/
 
   //4.9 Noise Blending
-  vec4 blendValue = texture2D(sampler4, vTexCoord1);
+  vec4 blendValue = texture2D(sampler3, vTexCoord1);
   gl_FragColor = mix(texel, blendValue, 0.95);
 }
 

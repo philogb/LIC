@@ -7,27 +7,21 @@ uniform sampler2D sampler1;
 
 uniform float width;
 uniform float height;
-uniform int cxFlag;
 uniform int init;
 
 //4.8 Coordinate Re-Initialization
 void main(void) {
-  vec2 coord = gl_FragCoord.xy / vec2(width, height);
+  vec2 coord = vTexCoord1;
 
-  float idx;
-  if (cxFlag == 1) {
-    idx = gl_FragCoord.x;
-  } else {
-    idx = gl_FragCoord.y;
-  }
-
-  float c = texture2D(sampler1, coord).x;
-  float ci = idx;
-
+  float idx = gl_FragCoord.x, idy = gl_FragCoord.y;
+  vec4 texel = texture2D(sampler1, coord);
+  float cx = texel.x;
+  float cy = texel.y;
   if (init == 0) {
-    ci += fract(c) / 10.;
+    idx += fract(cx) / 10.;
+    idy += fract(cy) / 10.;
   }
 
-  gl_FragColor = vec4(ci);
+  gl_FragColor = vec4(idx, idy, 0, 0);
 }
 
