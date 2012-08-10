@@ -12,7 +12,6 @@ var sharpness = 0,
       x -= width / 2;
       y -= height / 2;
       var norm = Math.sqrt(x * x + y * y);
-      //return [0, 0];
       return [y / norm * 10, x / norm * 10];
     };
 
@@ -24,7 +23,7 @@ function createFieldTextureArray(field) {
   for (var x = 0; x < width; ++x) {
     for (var y = 0; y < height; ++y) {
       idx = (x + y * width) * 4;
-      v = field(x, (height -1) - y);
+      v = field(x, height - y);
       pvx = v[0];
       pvy = v[1];
       vx[idx] = pvx;
@@ -166,8 +165,8 @@ function init(opt) {
           data: {
             type: gl.FLOAT,
             width: width,
-            height: height
-            //value: cx
+            height: height,
+            value: cx
           }
         }
       });
@@ -179,8 +178,8 @@ function init(opt) {
           data: {
             type: gl.FLOAT,
             width: width,
-            height: height
-            //value: cy
+            height: height,
+            value: cy
           }
         }
       });
@@ -259,17 +258,6 @@ function init(opt) {
         return ans;
       }
 
-      //initialize cx cy
-      Media.Image.postProcess({
-        toFrameBuffer: 'cx',
-        program: 'coord-reinit',
-        uniforms: uniforms({ init: 1, cxFlag: 1 })
-      }).postProcess({
-        toFrameBuffer: 'cy',
-        program: 'coord-reinit',
-        uniforms: uniforms({ init: 1, cxFlag: 0 })
-      });
-
       var noiseTex = true;
       function draw(noiseTex) {
         var cxFrom, cxTo, cyFrom, cyTo, noiseFrom, noiseTo, blendFrom, blendTo;
@@ -294,11 +282,13 @@ function init(opt) {
         }
 
         Media.Image.postProcess({
+          aspectRatio: 1,
           fromTexture: [ cxFrom + '-texture', cyFrom + '-texture', 'field-x', 'field-y' ],
           toFrameBuffer: cxTo,
           program: 'coord-integration',
           uniforms: uniforms({ cxFlag: 1 })
         }).postProcess({
+          aspectRatio: 1,
           fromTexture: [ cxFrom + '-texture', cyFrom + '-texture', 'field-x', 'field-y' ],
           toFrameBuffer: cyTo,
           program: 'coord-integration',
@@ -311,6 +301,7 @@ function init(opt) {
           toScreen: true,
           uniforms: uniforms({ sharpness: sharpness })
         }).postProcess({
+          aspectRatio: 1,
           fromTexture: [ cxTo + '-texture', cyTo + '-texture', texFrom + '-texture', 'background' ],
           toFrameBuffer: texTo,
           program: 'Np',
@@ -320,15 +311,17 @@ function init(opt) {
           })
           //re-initialization
         }).postProcess({
+          aspectRatio: 1,
           fromTexture: [ cxTo + '-texture' ],
           toFrameBuffer: cxFrom,
           program: 'coord-reinit',
-          uniforms: uniforms({ cxFlag: 1, init: 0 })
+          uniforms: uniforms({ cxFlag: 1, time: Date.now() })
         }).postProcess({
+          aspectRatio: 1,
           fromTexture: [ cyTo + '-texture' ],
           toFrameBuffer: cyFrom,
           program: 'coord-reinit',
-          uniforms: uniforms({ cxFlag: 0, init: 0 })
+          uniforms: uniforms({ cxFlag: 0, time: Date.now() })
         });
       }
 
@@ -394,17 +387,25 @@ function load() {
   var img;
   createImageTextureArray('img/flowers.jpg', function(background) {
     createImageTextureArray('img/v.jpg', function(v) {
-        //var vdata = v.data;
-        //lmax = 20;
-        //vmax = 50;
-        //field = function(x, y) {
-          //var idx = (x + y * width) * 4,
-              //norm = vdata[idx] / 255 * vmax / 2,
-              //angle = vdata[idx + 1] / 255 * Math.PI * 2;
+        v = v.data;
+        function sq(v) {
+           for (var i = 0, l = v.length; i < l; ++i) {
+              v[i] *= v[i];
+           }
+           return v;
+        };
+        lmax = 20;
+        vmax = 100;
+        field = function(x, y) {
+          var idx = (x + y * width) * 4,
+              norm = v[idx] / 255 * vmax,
+              angle = v[idx + 1] / 255 * Math.PI * 2;
 
-          //return [Math.cos(angle) * norm, Math.sin(angle) * norm];
+          //return [5, 0];
+          //return [2, 0];
+          return [Math.cos(angle) * norm, Math.sin(angle) * norm];
 
-        //};
+        };
         init({
           background: background
         });

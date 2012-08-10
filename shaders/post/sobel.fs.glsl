@@ -2,6 +2,7 @@
 precision highp float;
 #endif
 
+#define PI 3.1415926535
 #define PI2 6.28318530717959
 
 varying vec2 vTexCoord1;
@@ -55,11 +56,14 @@ void main(void) {
                  id[1][0] * tx0y1 + id[1][1] * tx1y1 + id[1][2] * tx2y1 +
                  id[2][0] * tx0y2 + id[2][1] * tx1y2 + id[2][2] * tx2y2;
 
-  float fColorGx = (colorGx.r + colorGx.g + colorGx.b + colorGx.a) / 4.;
-  float fColorGy = (colorGy.r + colorGy.g + colorGy.b + colorGy.a) / 4.;
+  /*float fColorGx = (colorGx.r + colorGx.g + colorGx.b + colorGx.a) / 4.;*/
+  /*float fColorGy = (colorGy.r + colorGy.g + colorGy.b + colorGy.a) / 4.;*/
+
+  float fColorGx = colorGx.r;
+  float fColorGy = colorGy.r;
 
   float norm = sqrt(fColorGx * fColorGx + fColorGy * fColorGy);
-  float angle = atan(fColorGy, fColorGx);
+  float angle = atan(fColorGy, fColorGx) + PI;
   if (angle < 0.) {
     angle += PI2;
   }

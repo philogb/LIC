@@ -11,35 +11,35 @@ var alic = false,
     field = function(x, y) {
       x -= width / 2;
       y -= height / 2;
-      return [y, x];
+      return [-y, x];
     };
 
-//lmax = 25;
-//vmax = 200;
-//field = function(x, y) {
-  //x -= width / 2;
-  //y -= height / 2;
-  //x /= 50;
-  //y /= 50;
-  //var charge = 10000,
-      //rq = 10,
-      //v1 = [ rq - x, -y],
-      //v2 = [-rq - x, -y],
-      //d1 = Math.sqrt(v1[0] * v1[0] + v1[1] * v1[1]),
-      //d2 = Math.sqrt(v2[0] * v2[0] + v2[1] * v2[1]);
+lmax = 15;
+vmax = 290;
+field = function(x, y) {
+  x -= width / 2;
+  y -= height / 2;
+  x /= 50;
+  y /= 50;
+  var charge = 10000,
+      rq = 10,
+      v1 = [ rq - x, -y],
+      v2 = [-rq - x, -y],
+      d1 = Math.sqrt(v1[0] * v1[0] + v1[1] * v1[1]),
+      d2 = Math.sqrt(v2[0] * v2[0] + v2[1] * v2[1]);
 
-  //if (d1 < 3 || d2 < 3) {
-    //return [0, 0];
-  //}
+  if (d1 < 3 || d2 < 3) {
+    return [0, 0];
+  }
 
-  //v1[0] = charge / (d1 * d1 * d1) * v1[0];
-  //v1[1] = charge / (d1 * d1 * d1) * v1[1];
+  v1[0] = charge / (d1 * d1 * d1) * v1[0];
+  v1[1] = charge / (d1 * d1 * d1) * v1[1];
 
-  //v2[0] = charge / (d2 * d2 * d2) * v2[0];
-  //v2[1] = charge / (d2 * d2 * d2) * v2[1];
+  v2[0] = charge / (d2 * d2 * d2) * v2[0];
+  v2[1] = charge / (d2 * d2 * d2) * v2[1];
 
-  //return [v1[0] - v2[0], v1[1] - v2[1]];
-//};
+  return [v1[0] - v2[0], v1[1] - v2[1]];
+};
 
 function createFieldTextureArray(field) {
   var vx = new Float32Array(width * height * 4),
@@ -548,13 +548,15 @@ function init() {
           //mapWidth = 400,
           //mapHeight = 120;
 
+      //lmax = 20;
+      //vmax = 5;
       //field = function(x, y) {
         //x = (x * mapWidth / width) >> 0;
         //x = (x + 120) % mapWidth;
         //y = mapHeight - ((y * mapHeight / height) >> 0);
         //var idx = x + y * mapWidth;
-        //var uval = u[idx] * maxDim,
-            //vval = v[idx] * maxDim;
+        //var uval = u[idx],
+            //vval = v[idx];
         //return [uval, vval];
       //};
 
