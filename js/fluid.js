@@ -3,35 +3,31 @@ PhiloGL.unpack();
 var sharpness = 0,
     width = 512, //canvas width
     height = 512, //canvas height
+    canvasWidth = width,
+    canvasHeight = height,
     vWidth = width, //domain width for the vector field
     vHeight = height, //domain height for the vector field
-    lmax = 20, //maximum displacement distance (in pixels)
+    lmax = 5, //maximum displacement distance (in pixels)
     vmax = 50, //maximum vector field value
     ctx =  document.createElement('canvas').getContext('2d'),
     field = function(x, y) {
-      x -= width / 2;
-      y -= height / 2;
-      var norm = Math.sqrt(x * x + y * y);
-      return [y / norm * 10, x / norm * 10];
+      return [0, 0];
     };
 
 function createFieldTextureArray(field) {
-  var vx = new Float32Array(width * height * 4),
-      vy = new Float32Array(width * height * 4),
-      v, pvx, pvy, idx;
+  var vf = new Float32Array(width * height * 4),
+      v, idx;
 
   for (var x = 0; x < width; ++x) {
     for (var y = 0; y < height; ++y) {
       idx = (x + y * width) * 4;
-      v = field(x, height - y);
-      pvx = v[0];
-      pvy = v[1];
-      vx[idx] = pvx;
-      vy[idx] = pvy;
+      v = field(x, (height -1) - y);
+      vf[idx] = v[0];
+      vf[idx + 1] = v[1];
     }
   }
 
-  return [vx, vy];
+  return vf;
 }
 
 function createImageTextureArray(filename, callback) {
@@ -49,60 +45,142 @@ function createImageTextureArray(filename, callback) {
   };
 }
 
-function createCoordinatesTextureArray(index) {
-  var ans = new Float32Array(width * height * 4);
-
-  for (var i = 0, l = width * height; i < l; ++i) {
-    var idx = i * 4,
-        value = index(i);
-
-    ans[idx] = value;
-  }
-
-  return ans;
-}
-
 function init(opt) {
-  var rnd = Math.random;
-  var cx = createCoordinatesTextureArray(function(i) { return (i % width) + rnd(); });
-  var cy = createCoordinatesTextureArray(function(i) { return Math.floor(i / width) + rnd(); });
   var v = createFieldTextureArray(field);
 
-
   var canvas = document.getElementById('canvas');
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
+
+  var maximized = false;
+  function maximize() {
+    if (!maximized) {
+      canvasWidth = window.innerWidth;
+      canvasHeight = window.innerHeight;
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      canvas.className = 'floating';
+      document.body.appendChild(canvas);
+      document.querySelector('div.title').style.display = '';
+    } else {
+      var container = document.querySelector('div.canvas-container');
+      canvas.width = width;
+      canvas.height = height;
+      canvasWidth = width;
+      canvasHeight = height;
+      canvas.className = '';
+      container.appendChild(canvas);
+      document.querySelector('div.title').style.display = 'none';
+    }
+    maximized = !maximized;
+  }
+
+  document.querySelector('a.fullscreen').addEventListener('click', function(e) {
+    e.preventDefault();
+    maximize();
+  });
+
+  window.addEventListener('resize', function() {
+    if (maximized) {
+      canvasWidth = window.innerWidth;
+      canvasHeight = window.innerHeight;
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+    }
+  });
 
   PhiloGL('canvas', {
     program: [{
-      path: 'shaders/dye/',
+      path: 'shaders/fluid/',
       id: 'coord-integration',
       vs: 'postprocess.vs.glsl',
       fs: 'ci.fs.glsl',
-      from: 'uris',
-      noCache: true
+      from: 'uris'
     }, {
-      path: 'shaders/dye/',
+      path: 'shaders/fluid/',
       id: 'coord-reinit',
       vs: 'postprocess.vs.glsl',
       fs: 'cri.fs.glsl',
-      from: 'uris',
-      noCache: true
+      from: 'uris'
     }, {
-      path: 'shaders/dye/',
+      path: 'shaders/fluid/',
       id: 'Np',
       vs: 'postprocess.vs.glsl',
       fs: 'np.fs.glsl',
-      from: 'uris',
-      noCache: true
+      from: 'uris'
     }, {
-      path: 'shaders/dye/',
+      path: 'shaders/fluid/',
       id: 'Na',
       vs: 'postprocess.vs.glsl',
       fs: 'na.fs.glsl',
-      from: 'uris',
-      noCache: true
+      from: 'uris'
+    }, {
+      path: 'shaders/fluid/',
+      id: 'fluid',
+      vs: 'postprocess.vs.glsl',
+      fs: 'fluid.fs.glsl',
+      from: 'uris'
+    }, {
+      path: 'shaders/fluid/',
+      id: 'fluid-slow',
+      vs: 'postprocess.vs.glsl',
+      fs: 'fluid-slow.fs.glsl',
+      from: 'uris'
+    }, {
+      path: 'shaders/fluid/',
+      id: 'copy',
+      vs: 'postprocess.vs.glsl',
+      fs: 'copy.fs.glsl',
+      from: 'uris'
     }],
+    events: {
+      cacheSize: false,
+      centerOrigin: false,
+      cachePosition: false,
+      onDragStart: function(e) {
+        this.pos = {
+          x: e.x,
+          y: e.y
+        };
+        this.dragging = true;
+      },
+      onDragCancel: function() {
+        this.dragging = false;
+      },
+      onDragEnd: function() {
+        this.dragging = false;
+      },
+      onDragMove: function(e) {
+        var pos = this.pos,
+            from = this.vFrom,
+            to = this.vTo,
+            ex = e.x / canvasWidth * width,
+            ey = e.y / canvasHeight * height,
+            px = pos.x / canvasWidth * width,
+            py = pos.y / canvasHeight * height;
+
+        Media.Image.postProcess({
+          width: width,
+          height: height,
+          program: 'fluid',
+          fromTexture: from + '-texture',
+          toFrameBuffer: to,
+          uniforms: {
+            mouse: [px, height - py, px - ex, ey - py],
+            width: width,
+            height: height
+          }
+        });
+
+        pos.x = e.x;
+        pos.y = e.y;
+      },
+      onKeyUp: function(e) {
+        if (e.key == 'esc' && maximized) {
+          maximize();
+        }
+      }
+    },
     onError: function(e) {
       throw e;
     },
@@ -110,29 +188,42 @@ function init(opt) {
       var gl = app.gl,
           program = app.program,
           canvas = app.canvas;
-       app.setTexture('field-x', {
-        pixelStore: [{
-          name: gl.UNPACK_FLIP_Y_WEBGL,
-          value: false
-        }],
-        data: {
-          type: gl.FLOAT,
-          width: width,
-          height: height,
-          value: v[0]
+
+       app.vFrom = 'field';
+       app.vTo = 'fieldp';
+
+
+       app.setFrameBuffer('field', {
+        width: width,
+        height: height,
+        bindToTexture: {
+          pixelStore: [{
+            name: gl.UNPACK_FLIP_Y_WEBGL,
+            value: false
+          }],
+          data: {
+            type: gl.FLOAT,
+            width: width,
+            height: height,
+            value: v
+          }
         }
       });
 
-      app.setTexture('field-y', {
-        pixelStore: [{
-          name: gl.UNPACK_FLIP_Y_WEBGL,
-          value: false
-        }],
-        data: {
-          type: gl.FLOAT,
-          width: width,
-          height: height,
-          value: v[1]
+      app.setFrameBuffer('fieldp', {
+        width: width,
+        height: height,
+        bindToTexture: {
+          pixelStore: [{
+            name: gl.UNPACK_FLIP_Y_WEBGL,
+            value: false
+          }],
+          data: {
+            type: gl.FLOAT,
+            width: width,
+            height: height,
+            value: v
+          }
         }
       });
 
@@ -141,9 +232,9 @@ function init(opt) {
           name: gl.UNPACK_FLIP_Y_WEBGL,
           value: false
         }],
-        width: width,
-        height: height,
         data: {
+          width: width,
+          height: height,
           value: opt.background
         }
       });
@@ -158,45 +249,19 @@ function init(opt) {
         }
       });
 
-      app.setFrameBuffer('cx', {
+      app.setFrameBuffer('c', {
         width: width,
         height: height,
         bindToTexture: {
           data: {
             type: gl.FLOAT,
             width: width,
-            height: height,
-            value: cx
+            height: height
           }
         }
       });
 
-      app.setFrameBuffer('cy', {
-        width: width,
-        height: height,
-        bindToTexture: {
-          data: {
-            type: gl.FLOAT,
-            width: width,
-            height: height,
-            value: cy
-          }
-        }
-      });
-
-      app.setFrameBuffer('cxp', {
-        width: width,
-        height: height,
-        bindToTexture: {
-          data: {
-            width: width,
-            height: height,
-            type: gl.FLOAT
-          }
-        }
-      });
-
-      app.setFrameBuffer('cyp', {
+      app.setFrameBuffer('cp', {
         width: width,
         height: height,
         bindToTexture: {
@@ -242,175 +307,121 @@ function init(opt) {
         }
       });
 
-      function uniforms(opt) {
-        opt = opt || {};
-        var ans = {
-          width: width,
-          height: height,
-          vWidth: vWidth,
-          vHeight: vHeight,
-          lmax: lmax,
-          vmax: vmax
-        };
-        for (var k in opt) {
-          ans[k] = opt[k];
-        }
-        return ans;
-      }
-
-      var noiseTex = true;
-      function draw(noiseTex) {
-        var cxFrom, cxTo, cyFrom, cyTo, noiseFrom, noiseTo, blendFrom, blendTo;
-        if (noiseTex) {
-          cxFrom = 'cx',
-          cxTo = 'cxp',
-          cyFrom = 'cy',
-          cyTo = 'cyp',
-          texFrom = 'N',
-          texTo = 'Np';
-          blendFrom = 'Nb';
-          blendTo = 'Na';
-        } else {
-          cxFrom = 'cx',
-          cxTo = 'cxp',
-          cyFrom = 'cy',
-          cyTo = 'cyp',
-          texFrom = 'Np',
-          texTo = 'N';
-          blendFrom = 'Na';
-          blendTo = 'Nb';
-        }
-
-        Media.Image.postProcess({
-          aspectRatio: 1,
-          fromTexture: [ cxFrom + '-texture', cyFrom + '-texture', 'field-x', 'field-y' ],
-          toFrameBuffer: cxTo,
-          program: 'coord-integration',
-          uniforms: uniforms({ cxFlag: 1 })
-        }).postProcess({
-          aspectRatio: 1,
-          fromTexture: [ cxFrom + '-texture', cyFrom + '-texture', 'field-x', 'field-y' ],
-          toFrameBuffer: cyTo,
-          program: 'coord-integration',
-          uniforms: uniforms({ cxFlag: 0 })
-        }).postProcess({
-          aspectRatio: 1,
-          fromTexture: [ cxTo + '-texture', cyTo + '-texture', texFrom + '-texture', blendFrom + '-texture', 'background', 'field-x', 'field-y' ],
-          toFrameBuffer: blendTo,
-          program: 'Na',
-          toScreen: true,
-          uniforms: uniforms({ sharpness: sharpness })
-        }).postProcess({
-          aspectRatio: 1,
-          fromTexture: [ cxTo + '-texture', cyTo + '-texture', texFrom + '-texture', 'background' ],
-          toFrameBuffer: texTo,
-          program: 'Np',
-          uniforms: uniforms({
-            enable: Math.sin(Date.now() / 500),
-            sharpness: sharpness
-          })
-          //re-initialization
-        }).postProcess({
-          aspectRatio: 1,
-          fromTexture: [ cxTo + '-texture' ],
-          toFrameBuffer: cxFrom,
-          program: 'coord-reinit',
-          uniforms: uniforms({ cxFlag: 1, time: Date.now() })
-        }).postProcess({
-          aspectRatio: 1,
-          fromTexture: [ cyTo + '-texture' ],
-          toFrameBuffer: cyFrom,
-          program: 'coord-reinit',
-          uniforms: uniforms({ cxFlag: 0, time: Date.now() })
-        });
-      }
-
-      Fx.requestAnimationFrame(function loop() {
-        draw(noiseTex);
-        noiseTex = !noiseTex;
-        //draw(noiseTex);
-        //noiseTex = !noiseTex;
-        //draw(noiseTex);
-        //noiseTex = !noiseTex;
-        //draw(noiseTex);
-        //noiseTex = !noiseTex;
-        //draw(noiseTex);
-        //noiseTex = !noiseTex;
-        //draw(noiseTex);
-        //noiseTex = !noiseTex;
-        //draw(noiseTex);
-        //noiseTex = !noiseTex;
-        //draw(noiseTex);
-        //noiseTex = !noiseTex;
-        //draw(noiseTex);
-        //noiseTex = !noiseTex;
-        //draw(noiseTex);
-        Fx.requestAnimationFrame(loop);
-      });
+      animate(app);
     }
   });
 }
 
-
-function map(img) {
-  new IO.XHR.Group({
-    urls: ['data/u.txt', 'data/v.txt'],
-    //noCache: true,
-    //responseType: 'arraybuffer',
-    onError: function() {
-      console.log('error', arguments);
-    },
-    onComplete: function(map) {
-      var u = JSON.parse(map[0]),
-          v = JSON.parse(map[1]),
-          mapWidth = 400,
-          mapHeight = 120;
-
-      lmax = 3; //maximum displacement distance (in pixels)
-      vmax = 10; //maximum vector field value
-      field = function(x, y) {
-        x = (x * mapWidth / width) >> 0;
-        x = (x + 120) % mapWidth;
-        y = mapHeight - ((y * mapHeight / height) >> 0);
-        var idx = x + y * mapWidth;
-        var uval = u[idx],
-            vval = v[idx];
-        return [uval, vval];
-      };
-
-      init(img);
+function animate(app) {
+  function uniforms(opt) {
+    opt = opt || {};
+    var ans = {
+      width: width,
+      height: height,
+      vWidth: vWidth,
+      vHeight: vHeight,
+      lmax: lmax,
+      vmax: vmax
+    };
+    for (var k in opt) {
+      ans[k] = opt[k];
     }
-  }).send();
+    return ans;
+  }
+
+  //initialize cx cy
+  Media.Image.postProcess({
+    width: width,
+    height: height,
+    toFrameBuffer: 'c',
+    program: 'coord-reinit',
+    uniforms: uniforms({ init: 1 })
+  });
+
+  var noiseTex = true;
+  function draw(noiseTex) {
+    var cxFrom, cxTo, cyFrom, cyTo, noiseFrom, noiseTo, blendFrom, blendTo;
+    if (noiseTex) {
+      cFrom = 'c',
+      cTo = 'cp',
+      texFrom = 'N',
+      texTo = 'Np';
+      blendFrom = 'Nb';
+      blendTo = 'Na';
+    } else {
+      cFrom = 'c',
+      cTo = 'cp',
+      texFrom = 'Np',
+      texTo = 'N';
+      blendFrom = 'Na';
+      blendTo = 'Nb';
+    }
+
+    Media.Image.postProcess({
+      width: width,
+      height: height,
+      fromTexture: [ cFrom + '-texture', app.vTo + '-texture' ],
+      toFrameBuffer: cTo,
+      program: 'coord-integration',
+      uniforms: uniforms()
+    }).postProcess({
+      width: width,
+      height: height,
+      fromTexture: [ cTo + '-texture', texFrom + '-texture', blendFrom + '-texture', app.vTo + '-texture' ],
+      toFrameBuffer: blendTo,
+      //toScreen: true,
+      program: 'Na',
+      uniforms: uniforms({ sharpness: sharpness })
+    }).postProcess({
+      width: width,
+      height: height,
+      fromTexture: [ cTo + '-texture', texFrom + '-texture', 'background' ],
+      toFrameBuffer: texTo,
+      program: 'Np',
+      uniforms: uniforms({
+        sharpness: sharpness
+      })
+    }).postProcess({
+      width: width,
+      height: height,
+      fromTexture: cTo + '-texture',
+      toFrameBuffer: cFrom,
+      program: 'coord-reinit',
+      uniforms: uniforms({ init: 0 })
+    }).postProcess({
+      width: width,
+      height: height,
+      fromTexture: app.vTo + '-texture',
+      toFrameBuffer: app.vFrom,
+      program: 'fluid-slow'
+    }).postProcess({
+      aspectRatio: 1,
+      fromTexture: blendTo + '-texture',
+      toScreen: true,
+      program: 'copy',
+      width: canvasWidth,
+      height: canvasHeight
+    });
+
+    var tmp = app.vTo;
+    app.vTo = app.vFrom;
+    app.vFrom = tmp;
+  }
+
+  Fx.requestAnimationFrame(function loop() {
+    draw(noiseTex);
+    noiseTex = !noiseTex;
+    Fx.requestAnimationFrame(loop);
+  });
 }
 
 function load() {
-  var img;
-  createImageTextureArray('img/flowers.jpg', function(background) {
-    createImageTextureArray('img/v.jpg', function(v) {
-        v = v.data;
-        function sq(v) {
-           for (var i = 0, l = v.length; i < l; ++i) {
-              v[i] *= v[i];
-           }
-           return v;
-        };
-        lmax = 20;
-        vmax = 100;
-        field = function(x, y) {
-          var idx = (x + y * width) * 4,
-              norm = v[idx] / 255 * vmax,
-              angle = v[idx + 1] / 255 * Math.PI * 2;
-
-          //return [5, 0];
-          //return [2, 0];
-          return [Math.cos(angle) * norm, Math.sin(angle) * norm];
-
-        };
-        init({
-          background: background
-        });
+  createImageTextureArray('img/pattern00.png', function(background) {
+    init({
+      background: background
     });
   });
 }
 
 window.addEventListener('DOMContentLoaded', load);
+

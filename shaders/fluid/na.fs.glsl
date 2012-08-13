@@ -41,26 +41,17 @@ void main(void) {
   vec2 field = vec2(vx, vy);
 
   //4.5 Edge Treatment
-  if (cx > width || cx < 0.
-   || cy > height || cy < 0.) {
-    //out of bounds. inject transparency.
-    texel = vec4(0);
-  } else {
-    texel = texture2D(sampler2, pixel);
-  }
-
-  //5.3 diffusion correction
-  texel = (texel - .5) / (sharpness * (2. * abs(texel - .5) -1.) + 1.) + .5;
+  texel = texture2D(sampler2, pixel);
 
   //4.10.2 Velocity Mask
   const float m = 1.;
-  const float n = 1.;
+  const float n = 4.;
   float ratio = min(length(field) / vmax, 1.);
   vec4 alpha = (1. - pow(1. - ratio, m)) * (1. - pow(1. - texel, vec4(n)));
   texel = alpha;
 
   //4.9 Noise Blending
   vec4 blendValue = texture2D(sampler3, vTexCoord1);
-  gl_FragColor = mix(texel, blendValue, 0.95);
+  gl_FragColor = mix(texel, blendValue, 0.5);
 }
 

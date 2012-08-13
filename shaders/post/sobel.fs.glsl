@@ -64,10 +64,6 @@ void main(void) {
 
   float norm = sqrt(fColorGx * fColorGx + fColorGy * fColorGy);
   float angle = atan(fColorGy, fColorGx) + PI;
-  if (angle < 0.) {
-    angle += PI2;
-  }
-  angle = mod(angle, PI2);
   angle /= PI2;
 
   if (type == 0) {
@@ -77,6 +73,6 @@ void main(void) {
   } else if (type == 2) {
     gl_FragColor = colorGy;
   }
-  gl_FragColor = vec4(norm, angle, 0, 0);
+  gl_FragColor = vec4(norm, /*angle*/, 0, 0);
 
 }

@@ -1,6 +1,6 @@
 PhiloGL.unpack();
 
-var width = 1024,
+var width = 512,
     height = 512,
     type = 2;
 
@@ -29,8 +29,7 @@ function init(img) {
           program = app.program,
           canvas = app.canvas;
 
-      gl.clearColor(0, 0, 0, 1);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      setCamera(app);
 
       app.setTexture('image', {
         width: width,
@@ -43,7 +42,7 @@ function init(img) {
       function draw() {
         Media.Image.postProcess({
           aspectRatio: 1,
-          fromTexture: [ 'image' ],
+          fromTexture: [ 'background' ],
           toScreen: true,
           program: 'sobel',
           uniforms: {
@@ -54,11 +53,59 @@ function init(img) {
         });
       }
 
-      //Fx.requestAnimationFrame(function loop() {
-        draw();
-        //var pixels = new Uint8Array(width * height * 4);
-        //Fx.requestAnimationFrame(loop);
-      //});
+      Fx.requestAnimationFrame(function loop() {
+        if (setCamera.canvas) {
+          updateBackground(setCamera.video, setCamera.canvas, setCamera.ctx, app);
+          draw();
+        }
+        Fx.requestAnimationFrame(loop);
+      });
+    }
+  });
+}
+
+function setCamera(app) {
+  navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia;
+  window.URL = window.URL || window.webkitURL;
+
+  if (navigator.getUserMedia) {
+    var video = document.createElement('video');
+    video.style.visibility = 'hidden';
+    video.style.position = 'absolute';
+    video.style.left = '-1000px';
+    document.body.appendChild(video);
+    video.autoplay = true;
+    video.addEventListener('play', function() {
+      console.log(video.offsetWidth, video.offsetHeight);
+
+      var canvas = document.createElement('canvas');
+      document.body.appendChild(canvas);
+      canvas.width = video.offsetWidth;
+      canvas.height = video.offsetHeight;
+      canvas.style.display = 'none';
+      var ctx = canvas.getContext('2d');
+
+      setCamera.canvas = canvas;
+      setCamera.video = video;
+      setCamera.ctx = ctx;
+
+    });
+
+    navigator.getUserMedia({ video: true }, function(stream) {
+      var url = window.URL.createObjectURL(stream);
+      video.src = url;
+
+    }, function() { console.log('error'); });
+  }
+}
+
+function updateBackground(video, canvas, ctx, app) {
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  var gl = app.gl;
+
+  app.setTexture('background', {
+    data: {
+      value: ctx.getImageData(0, 0, width, height)
     }
   });
 }

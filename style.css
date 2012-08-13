@@ -1,5 +1,39 @@
-html {
+html, body {
   text-align: center;
+  margin:0;
+  padding:0;
+  overflow: hidden;
+}
+
+div.title {
+  position: absolute;
+  z-index: 10;
+  color: white;
+  font-size: 1.8em;
+  top: 0;
+  left: 0;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+div.canvas-container {
+  width: 512px;
+  height: 512px;
+  margin: 0 auto;
+  padding: 0;
+  box-shadow: 0 0 7px rgba(0, 0, 0, 0.8);
+}
+
+a.fullscreen {
+  padding: 7px;
+  margin: 10px;
+  display: block;
+}
+
+canvas.floating {
+  position: absolute;
+  top:0;
+  left:0;
 }
 
 canvas {
