@@ -1,10 +1,114 @@
 html, body {
   text-align: center;
-  margin:0;
-  padding:0;
-  overflow: hidden;
+  font-family: 'Crimson Text', Verdana;
+  margin: 0;
+  padding: 0;
+}
+
+div.title {
+  position: absolute;
+  z-index: 10;
+  color: white;
+  font-size: 1.8em;
+  top: 0;
+  left: 0;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+div.title a {
+  color: white;
+}
+
+div.canvas-container {
+  margin: 0 auto;
+  padding: 0;
+  box-shadow: 0 0 7px rgba(0, 0, 0, 0.8);
+}
+
+a.fullscreen {
+  padding: 7px;
+  margin: 10px;
+  display: block;
+}
+
+canvas.floating {
+  position: absolute;
+  top:0;
+  left:0;
 }
 
 canvas {
   background: black;
+  cursor: crosshair;
 }
+
+#log-panel {
+  font-family: Arial;
+  margin: 0;
+  position: fixed;
+  top: 0;
+  right: 0;
+  padding: 5px;
+  color: white;
+  background-color: red;
+  font-weight: bold;
+  font-size: 0.9em;
+  z-index: 4000;
+}
+
+#container {
+  width: 1024px;
+  margin: auto;
+}
+
+body.no-webgl #container {
+  display: none;
+}
+
+div.fallback {
+  display: none;
+}
+
+body.no-webgl div.fallback {
+  display: block;
+}
+
+.description {
+  font-size: 13px;
+  padding: 5px;
+  text-align: left;
+  border: 1px solid #CCC;
+  background-color: #FFF1A8;
+  margin-bottom: 10px;
+}
+
+h1 {
+  text-shadow: rgba(0, 0, 0, 0.2) 0 0 3px;
+  margin: 5px;
+}
+
+.controls {
+  position: relative;
+  background: #E0ECFF;
+  padding: 7px;
+  border: 1px solid #ccc;
+  margin: 7px 0;
+}
+
+.controls table tr td {
+  text-align: left;
+  margin: auto;
+  font-size: 15px;
+}
+
+.canvas-container {
+  margin: auto;
+  position: relative;
+}
+
+.footer {
+  margin: 4px;
+  font-size: 13px;
+}
+

@@ -186,10 +186,6 @@ function init(opt) {
       centerOrigin: false,
       cachePosition: false,
       onDragStart: function(e) {
-        this.pos = {
-          x: e.x,
-          y: e.y
-        };
         this.dragging = true;
       },
       onDragCancel: function() {
@@ -198,7 +194,14 @@ function init(opt) {
       onDragEnd: function() {
         this.dragging = false;
       },
-      onDragMove: function(e) {
+      onMouseMove: function(e) {
+        if (!this.pos) {
+          this.pos = {
+            x: e.x,
+            y: e.y
+          };
+          return;
+        }
         var pos = this.pos,
             from = this.vFrom,
             to = this.vTo,
@@ -223,17 +226,23 @@ function init(opt) {
         pos.x = e.x;
         pos.y = e.y;
       },
+      onMouseOut: function() {
+        this.pos = false;
+      },
       onTouchStart: function(e) {
-        this.events.onDragStart.call(this, e);
+        this.pos = {
+          x: e.x,
+          y: e.y
+        };
       },
       onTouchCancel: function(e) {
-        this.events.onDragCancel.call(this, e);
+        this.events.onMouseOut.call(this, e);
       },
       onTouchMove: function(e) {
-        this.events.onDragMove.call(this, e);
+        this.events.onMouseMove.call(this, e);
       },
       onTouchEnd: function(e) {
-        this.events.onDragEnd.call(this, e);
+        this.events.onMouseOut.call(this, e);
       },
       onKeyUp: function(e) {
         if (e.key == 'esc' && maximized) {

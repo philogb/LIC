@@ -1,0 +1,37 @@
+<!doctype html>
+<head>
+  <title>LIC - Vector Field Visualization</title>
+  <link href='http://fonts.googleapis.com/css?family=Crimson+Text' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" media="all" type="text/css" href='style.css' />
+  <style>
+    #container {
+      width: 500px;
+    }
+  </style>
+</head>
+<body>
+    <div id="fallback" class="fallback"></div>
+
+    <div id="container">
+      <div id="title">
+        <h1>F(x, y) = (-y, x) visualized via LIC</h1>
+      </div>
+
+      <div class='description'>
+        This visualization implements the techniques in <a target='_blank' href='http://www.cs.umu.se/kurser/TDBD13/VT00/extra/p263-cabral.pdf'>Imaging Vector Fields Using Line Integral Convolution</a> to visualize a simple vector field.
+      </div>
+
+      <div class='canvas-container'>
+        <canvas id='canvas'></canvas>
+      </div>
+    </div>
+
+    <div class="footer">
+      Copyright &copy; <a href="http://philogb.github.com/">Nicolas Garcia
+        Belmonte</a>.
+    </div>
+    <script src='js/lic.js'></script>
+</body>
+
+
+

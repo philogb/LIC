@@ -2,7 +2,7 @@ PhiloGL.unpack();
 
 var alic = false,
     width = 1024, //canvas width
-    height = 1024, //canvas height
+    height = 512, //canvas height
     vWidth = width, //domain width for the vector field
     vHeight = height, //domain height for the vector field
     lmax = 50, //maximum displacement distance (in pixels)
@@ -13,33 +13,6 @@ var alic = false,
       y -= height / 2;
       return [-y, x];
     };
-
-lmax = 15;
-vmax = 290;
-field = function(x, y) {
-  x -= width / 2;
-  y -= height / 2;
-  x /= 50;
-  y /= 50;
-  var charge = 10000,
-      rq = 10,
-      v1 = [ rq - x, -y],
-      v2 = [-rq - x, -y],
-      d1 = Math.sqrt(v1[0] * v1[0] + v1[1] * v1[1]),
-      d2 = Math.sqrt(v2[0] * v2[0] + v2[1] * v2[1]);
-
-  if (d1 < 3 || d2 < 3) {
-    return [0, 0];
-  }
-
-  v1[0] = charge / (d1 * d1 * d1) * v1[0];
-  v1[1] = charge / (d1 * d1 * d1) * v1[1];
-
-  v2[0] = charge / (d2 * d2 * d2) * v2[0];
-  v2[1] = charge / (d2 * d2 * d2) * v2[1];
-
-  return [v1[0] - v2[0], v1[1] - v2[1]];
-};
 
 function createFieldTextureArray(field) {
   var vx = new Float32Array(width * height * 4),

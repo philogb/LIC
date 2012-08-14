@@ -1,0 +1,38 @@
+<!doctype html>
+<head>
+  <title>LIC - Vector Field Visualization</title>
+  <link href='http://fonts.googleapis.com/css?family=Crimson+Text' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" media="all" type="text/css" href='style.css' />
+  <style>
+    #container {
+      width: 500px;
+    }
+  </style>
+</head>
+<body>
+    <div id="fallback" class="fallback"></div>
+
+    <div id="container">
+      <div id="title">
+        <h1>F(x, y) = (-y, x) visualized via OLIC</h1>
+      </div>
+
+      <div class='description'>
+        This visualization implements the techniques in <a target='_blank' href='http://graphics.cs.ucdavis.edu/~lfeng/sig/tensor/papers/Animating%20Flow%20Fields%20Rendering%20of%20Oriented%20Line%20Integral%20Convolution.pdf'>Animating Flowfields: Rendering of Oriented Line Integral Convolution</a> to visualize a simple vector field.
+      </div>
+
+      <div class='canvas-container'>
+        <canvas id='canvas'></canvas>
+      </div>
+    </div>
+
+    <div class="footer">
+      Copyright &copy; <a href="http://philogb.github.com/">Nicolas Garcia
+        Belmonte</a>.
+    </div>
+    <script src='js/olic.js'></script>
+</body>
+
+
+
+
