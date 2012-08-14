@@ -1,18 +1,57 @@
 <!doctype html>
 <head>
   <title>LIC - Line integral convolution</title>
+  <link href='http://fonts.googleapis.com/css?family=Crimson+Text' rel='stylesheet' type='text/css'>
   <link rel="stylesheet" media="all" type="text/css" href='style.css' />
+  <link rel="stylesheet" media="all" type="text/css" href='fluid.css' />
 </head>
 <body>
-  <div class='title' style='display:none'>
-    Press esc. key to restore.
-  </div>
-  <div class='canvas-container'>
-    <canvas id='canvas'></canvas>
-  </div>
-  <a href='#' class='fullscreen'>Set fullscreen!</a>
+    <div id="log-panel" style="display:none;">
+      <span id="log-message"></span>
+    </div>
 
-  <script src='js/PhiloGL.js'></script>
-  <script src='js/fluid.js'></script>
+    <div id="fallback" class="fallback"></div>
+
+    <div id="container">
+      <div id="title">
+        <h1>Fluid Simulation via Lagrangian-Eulerian Advection</h1>
+      </div>
+
+      <div class='controls'>
+        Click and drag the black canvas to mix the fluid. See a video <a href='http://www.youtube.com/watch?v=v83CrHQHK70'>here</a>.
+      </div>
+
+      <div class='description'>
+        This visualization implements the techniques in <a target='_blank' href='http://www.cs.ucdavis.edu/~ma/ECS276/readings/Jobard_TVCG02.pdf'>Lagrangian-Eulerian Advection of Noise and Dye Textures
+for Unsteady Flow Visualization</a> to create a fluid simulation. Click and drag the cursor in the black canvas to create a velocity field and mix the fluid.
+      </div>
+
+      <div class='title' style='display:none'>
+        <a href='#'>Click here</a> to restore.
+      </div>
+
+      <div class='canvas-container'>
+        <canvas id='canvas'></canvas>
+      </div>
+      <a href='#' class='fullscreen'>Go fullscreen!</a>
+    </div>
+
+    <div class="footer">
+      Copyright &copy; <a href="http://philogb.github.com/">Nicolas Garcia
+        Belmonte</a> - Texture advection image taken from Felix Woitzel's <a href='http://www.chromeexperiments.com/detail/reaction-diffusion/'>Reaction Diffusion demo</a>.
+    </div>
+
+    <script src='js/PhiloGL.js'></script>
+    <script>
+      if (!PhiloGL.hasWebGL()) {
+        document.body.className = 'no-webgl';
+        document.getElementById('fallback').innerHTML = ''
+        +  '<div style="margin:10px;">'
+          +  'Your browser (or hardware) does not support WebGL. Go <a href="http://get.webgl.org">here</a> to find more information.'
+          +  '</div>'
+        +   '<iframe width="420" height="315" src="http://www.youtube.com/embed/v83CrHQHK70?rel=0" frameborder="0" allowfullscreen></iframe>';
+      }
+    </script>
+    <script src='js/fluid.js'></script>
 </body>
 

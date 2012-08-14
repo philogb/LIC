@@ -15,7 +15,6 @@ uniform int type;
 void main(void) {
   const mat3 Gx = mat3(-1, 0, 1, -2, 0, 2, -1, 0, 1);
   const mat3 Gy = mat3(-1, -2, -1, 0, 0, 0, 1, 2, 1);
-//  const mat3 id = mat3(1, 0, 0, 0, 0, 0, 0, 0, 0);
   vec2 dim = vec2(width, height);
 
   vec2 p = gl_FragCoord.xy;
@@ -56,9 +55,6 @@ void main(void) {
                  id[1][0] * tx0y1 + id[1][1] * tx1y1 + id[1][2] * tx2y1 +
                  id[2][0] * tx0y2 + id[2][1] * tx1y2 + id[2][2] * tx2y2;
 
-  /*float fColorGx = (colorGx.r + colorGx.g + colorGx.b + colorGx.a) / 4.;*/
-  /*float fColorGy = (colorGy.r + colorGy.g + colorGy.b + colorGy.a) / 4.;*/
-
   float fColorGx = colorGx.r;
   float fColorGy = colorGy.r;
 
@@ -73,6 +69,6 @@ void main(void) {
   } else if (type == 2) {
     gl_FragColor = colorGy;
   }
-  gl_FragColor = vec4(norm, /*angle*/, 0, 0);
+  gl_FragColor = vec4(norm, /*angle*/0, 0, 0);
 
 }

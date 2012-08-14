@@ -41,8 +41,10 @@ function init(img) {
 
       function draw() {
         Media.Image.postProcess({
+          width: canvas.width,
+          height: canvas.height,
           aspectRatio: 1,
-          fromTexture: [ 'background' ],
+          fromTexture: 'background',
           toScreen: true,
           program: 'sobel',
           uniforms: {
@@ -80,8 +82,8 @@ function setCamera(app) {
 
       var canvas = document.createElement('canvas');
       document.body.appendChild(canvas);
-      canvas.width = video.offsetWidth;
-      canvas.height = video.offsetHeight;
+      app.canvas.width = canvas.width = video.offsetWidth;
+      app.canvas.height = canvas.height = video.offsetHeight;
       canvas.style.display = 'none';
       var ctx = canvas.getContext('2d');
 

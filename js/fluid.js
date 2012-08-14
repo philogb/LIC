@@ -1,4 +1,12 @@
+(function () {
+
+var $ = function(d) { return document.getElementById(d); };
+
 PhiloGL.unpack();
+
+if (!PhiloGL.hasWebGL()) {
+  return;
+}
 
 var sharpness = 0,
     width = 512, //canvas width
@@ -45,7 +53,40 @@ function createImageTextureArray(filename, callback) {
   };
 }
 
+//Log singleton
+var Log = {
+  elem: null,
+  timer: null,
+
+  getElem: function() {
+    if (!this.elem) {
+      return (this.elem = $('log-message'));
+    }
+    return this.elem;
+  },
+
+  write: function(text, hide) {
+    if (this.timer) {
+      this.timer = clearTimeout(this.timer);
+    }
+
+    var elem = this.getElem(),
+    style = elem.parentNode.style;
+
+    elem.innerHTML = text;
+    style.display = '';
+
+    if (hide) {
+      this.timer = setTimeout(function() {
+        style.display = 'none';
+      }, 2000);
+    }
+  }
+};
+
 function init(opt) {
+  Log.write('Loading...');
+
   var v = createFieldTextureArray(field);
 
   var canvas = document.getElementById('canvas');
@@ -78,6 +119,13 @@ function init(opt) {
   document.querySelector('a.fullscreen').addEventListener('click', function(e) {
     e.preventDefault();
     maximize();
+  });
+
+  document.querySelector('div.title a').addEventListener('click', function(e) {
+    e.preventDefault();
+    if (maximized) {
+      maximize();
+    }
   });
 
   window.addEventListener('resize', function() {
@@ -174,6 +222,18 @@ function init(opt) {
 
         pos.x = e.x;
         pos.y = e.y;
+      },
+      onTouchStart: function(e) {
+        this.events.onDragStart.call(this, e);
+      },
+      onTouchCancel: function(e) {
+        this.events.onDragCancel.call(this, e);
+      },
+      onTouchMove: function(e) {
+        this.events.onDragMove.call(this, e);
+      },
+      onTouchEnd: function(e) {
+        this.events.onDragEnd.call(this, e);
       },
       onKeyUp: function(e) {
         if (e.key == 'esc' && maximized) {
@@ -308,6 +368,8 @@ function init(opt) {
       });
 
       animate(app);
+
+      Log.write('done.', true);
     }
   });
 }
@@ -425,3 +487,4 @@ function load() {
 
 window.addEventListener('DOMContentLoaded', load);
 
+})();
