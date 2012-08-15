@@ -4,17 +4,21 @@ Line Integral Convolution Techniques
 An implementation of line integral convolution techniques in JavaScript,
 Canvas 2D and WebGL.
 
-Papers implemented:
+## Papers implemented:
 
  * [Imaging Vector Fields Using Line Integral Convolution](http://www8.cs.umu.se/kurser/TDBD13/VT00/extra/p263-cabral.pdf) by Brian Cabral Leith (Casey) Leedom
  * [Animating Flowfields: Rendering of Oriented Line Integral Convolution](http://graphics.cs.ucdavis.edu/~lfeng/sig/tensor/papers/Animating%20Flow%20Fields%20Rendering%20of%20Oriented%20Line%20Integral%20Convolution.pdf)
  * [Lagrangian-Eulerian Advection of Noise and Dye Textures for Unsteady Flow Visualization](http://www.cs.ucdavis.edu/~ma/ECS276/readings/Jobard_TVCG02.pdf) by Bruno Jobard, Gordon Erlebacher, and M. Yousuff Hussaini.
+
+## Examples
 
  * [Fluid simulation based on dye texture advection.](fluid.html)
  * [Magnetic dipole simulation based on white noise texture advection.](dipole.html)
  * [f(x) = (-y, x) animation based on white noise texture advection.](vortex.html)
  * [f(x) = (-y, x) 2D Canvas based line integral convolution.](lic.html)
  * [f(x) = (-y, x) 2D Canvas based oriented line integral convolution.](olic.html)
+
+## Copyright
 
  * Copyright: [Twitter, Inc.](http://twitter.com/)
  * Author: [Nicolas Garcia Belmonte](http://philogb.github.com/)
