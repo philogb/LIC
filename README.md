@@ -4,7 +4,7 @@ Line Integral Convolution Techniques
 An implementation of line integral convolution techniques in JavaScript,
 Canvas 2D and WebGL.
 
-## Papers implemented:
+## Papers implemented
 
  * [Imaging Vector Fields Using Line Integral Convolution](http://www8.cs.umu.se/kurser/TDBD13/VT00/extra/p263-cabral.pdf) by Brian Cabral Leith (Casey) Leedom
  * [Animating Flowfields: Rendering of Oriented Line Integral Convolution](http://graphics.cs.ucdavis.edu/~lfeng/sig/tensor/papers/Animating%20Flow%20Fields%20Rendering%20of%20Oriented%20Line%20Integral%20Convolution.pdf)
