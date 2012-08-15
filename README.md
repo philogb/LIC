@@ -12,11 +12,12 @@ Canvas 2D and WebGL.
 
 ## Examples
 
- * [Fluid simulation based on dye texture advection.](fluid.html)
- * [Magnetic dipole simulation based on white noise texture advection.](dipole.html)
- * [f(x) = (-y, x) animation based on white noise texture advection.](vortex.html)
- * [f(x) = (-y, x) 2D Canvas based line integral convolution.](lic.html)
- * [f(x) = (-y, x) 2D Canvas based oriented line integral convolution.](olic.html)
+ * [Fluid simulation based on dye texture
+   advection.](http://philogb.github.com/LIC/fluid.html)
+ * [Magnetic dipole simulation based on white noise texture advection.](http://philogb.github.com/LIC/dipole.html)
+ * [f(x) = (-y, x) animation based on white noise texture advection.](http://philogb.github.com/LIC/vortex.html)
+ * [f(x) = (-y, x) 2D Canvas based line integral convolution.](http://philogb.github.com/LIC/lic.html)
+ * [f(x) = (-y, x) 2D Canvas based oriented line integral convolution.](http://philogb.github.com/LIC/olic.html)
 
 ## Copyright
 
