@@ -2,7 +2,7 @@ Line Integral Convolution Techniques
 =====================================
 
 An implementation of line integral convolution techniques in JavaScript,
-Canvas 2D and WebGL.
+Canvas 2D and WebGL. Here's the [associated blog post](http://blog.thejit.org/2012/08/14/playing-with-line-integral-convolutions/).
 
 ## Papers implemented
 
