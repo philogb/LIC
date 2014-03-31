@@ -11,8 +11,8 @@ if (!PhiloGL.hasWebGL()) {
 var sharpness = 0,
     width = 512, //canvas width
     height = 512, //canvas height
-    canvasWidth = width,
-    canvasHeight = height,
+    canvasWidth = 1024,
+    canvasHeight = 512,
     vWidth = width, //domain width for the vector field
     vHeight = height, //domain height for the vector field
     lmax = 5, //maximum displacement distance (in pixels)

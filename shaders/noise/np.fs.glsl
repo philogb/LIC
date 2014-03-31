@@ -17,6 +17,11 @@ uniform float vHeight;
 uniform float vmax;
 uniform float lmax;
 uniform float maxDim;
+uniform float timer;
+
+float rand(vec2 co){
+  return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
 
 void main(void) {
   float x = gl_FragCoord.x;
@@ -37,13 +42,14 @@ void main(void) {
   if (cx > width || cx < 0.
    || cy > height || cy < 0.) {
     //out of bounds. inject random white noise.
-    texel = texture2D(sampler4, pixel);
+    texel = texture2D(sampler4, rand(pixel + mod(timer, 37.)) * pixel);
+    /*texel = texture2D(sampler4, pixel);*/
   } else {
     texel = texture2D(sampler3, pixel);
   }
 
   //4.7 Noise Injection
-  if (texture2D(sampler5, pixel).r > 0.5) {
+  if (texture2D(sampler5, rand(pixel + mod(timer, 37.)) * pixel).r > 0.5) {
     texel = vec4(vec3(1. - texel.rgb), 1);
   }
 

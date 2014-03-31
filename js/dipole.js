@@ -12,7 +12,9 @@ var alic = false,
       x -= width / 2;
       y -= height / 2;
       return [-y, x];
-    };
+    },
+    timer = Date.now();
+
 
 lmax = 20;
 vmax = 290;
@@ -21,14 +23,14 @@ field = function(x, y) {
   y -= height / 2;
   x /= 50;
   y /= 50;
-  var charge = 10000,
-      rq = 10,
-      v1 = [ rq - x, -y],
-      v2 = [-rq - x, -y],
-      d1 = Math.sqrt(v1[0] * v1[0] + v1[1] * v1[1]),
-      d2 = Math.sqrt(v2[0] * v2[0] + v2[1] * v2[1]);
+  var charge = 800,
+      rq = 2,
+      v1 = [ (rq - x), -y],
+      v2 = [(-rq - x), -y],
+      d1 = Math.sqrt(v1[0] * v1[0] + v1[1] * v1[1]) + 1,
+      d2 = Math.sqrt(v2[0] * v2[0] + v2[1] * v2[1]) + 1;
 
-  if (d1 < 3 || d2 < 3) {
+  if (d1 < 1.01 || d2 < 1.2) {
     return [0, 0];
   }
 
@@ -320,7 +322,8 @@ function init() {
           vWidth: vWidth,
           vHeight: vHeight,
           lmax: lmax,
-          vmax: vmax
+          vmax: vmax,
+          timer: Date.now() - timer
         };
         for (var k in opt) {
           ans[k] = opt[k];

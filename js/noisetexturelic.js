@@ -12,7 +12,8 @@ var alic = false,
       x -= width / 2;
       y -= height / 2;
       return [-y, x];
-    };
+    },
+    timer = Date.now();
 
 function createFieldTextureArray(field) {
   var vx = new Float32Array(width * height * 4),
@@ -301,7 +302,8 @@ function init() {
           vWidth: vWidth,
           vHeight: vHeight,
           lmax: lmax,
-          vmax: vmax
+          vmax: vmax,
+          timer: Date.now() - timer
         };
         for (var k in opt) {
           ans[k] = opt[k];

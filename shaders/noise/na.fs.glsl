@@ -20,20 +20,10 @@ uniform float vHeight;
 uniform float vmax;
 uniform float lmax;
 uniform float maxDim;
+uniform float timer;
 
-// Packing a [0-1] float value into a 4D vector where each component will be a 8-bits integer
-vec4 packFloatToVec4i(const float value) {
-   const vec4 bitSh = vec4(256.0 * 256.0 * 256.0, 256.0 * 256.0, 256.0, 1.0);
-   const vec4 bitMsk = vec4(0.0, 1.0 / 256.0, 1.0 / 256.0, 1.0 / 256.0);
-   vec4 res = fract(value * bitSh);
-   res -= res.xxyz * bitMsk;
-   return res;
-}
-
-// Unpacking a [0-1] float value from a 4D vector where each component was a 8-bits integer
-float unpackFloatFromVec4i(const vec4 value){
-   const vec4 bitSh = vec4(1.0 / (256.0 * 256.0 * 256.0), 1.0 / (256.0 * 256.0), 1.0 / 256.0, 1.0);
-   return(dot(value, bitSh));
+float rand(vec2 co){
+  return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
 
 void main(void) {
@@ -61,13 +51,14 @@ void main(void) {
   if (cx > width || cx < 0.
    || cy > height || cy < 0.) {
     //out of bounds. inject random white noise.
-    texel = texture2D(sampler5, pixel);
+    texel = texture2D(sampler5, rand(pixel + mod(timer, 57.)) * pixel);
+    /*texel = texture2D(sampler5, pixel);*/
   } else {
     texel = texture2D(sampler3, pixel);
   }
 
   //4.7 Noise Injection
-  if (texture2D(sampler6, pixel).r > 0.5) {
+  if (texture2D(sampler6, rand(pixel + mod(timer, 37.)) * pixel).r > 0.5) {
     texel = 1. - texel;
   }
 
@@ -81,6 +72,7 @@ void main(void) {
   //4.9 Noise Blending
   vec4 blendValue = texture2D(sampler4, vTexCoord1);
 
+  /*gl_FragColor = mix(texel, blendValue, 0.96);*/
   gl_FragColor = mix(texel, blendValue, 0.96);
 }
 
